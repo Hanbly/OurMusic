@@ -1,0 +1,173 @@
+.playlist-modal-container {
+  width: 350px;
+  max-height: 400px;
+  background-color: #282828;
+  border-radius: 8px;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5);
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  z-index: 1200;
+  overflow: hidden;
+}
+
+.playlist-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid #404040;
+}
+
+.playlist-modal-header h4 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.playlist-modal-clear-btn {
+  background: none;
+  border: none;
+  color: #b3b3b3;
+  cursor: pointer;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: color 0.2s, background-color 0.2s;
+}
+
+.playlist-modal-clear-btn:hover {
+  color: #fff;
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.playlist-modal-list {
+  list-style: none;
+  margin: 0;
+  padding: 8px;
+  overflow-y: auto;
+  flex-grow: 1;
+}
+
+/* 美化滚动条 */
+.playlist-modal-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+.playlist-modal-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.playlist-modal-list::-webkit-scrollbar-thumb {
+  background-color: #535353;
+  border-radius: 4px;
+}
+
+.playlist-modal-list::-webkit-scrollbar-thumb:hover {
+  background-color: #888;
+}
+
+.playlist-modal-item {
+  display: flex;
+  align-items: center;
+  padding: 8px;
+  border-radius: 4px;
+  cursor: grab;
+  transition: background-color 0.2s;
+  user-select: none;
+
+  gap: 8px;
+}
+
+.playlist-modal-item:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.playlist-modal-item.playing {
+  background-color: rgba(130, 29, 185, 0.3);
+}
+
+.playlist-modal-item.playing .item-name,
+.playlist-modal-item.playing .playing-icon {
+  color: #a542cf;
+}
+
+.playlist-item-play-indicator {
+  width: 24px;
+  text-align: center;
+  margin-right: 12px;
+  color: #b3b3b3;
+  font-size: 0.8rem;
+}
+
+.playing-icon {
+  font-size: 1.1rem;
+}
+
+.playlist-item-info {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.item-name {
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+.item-artist {
+  font-size: 0.75rem;
+  color: #b3b3b3;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+.playlist-item-delete-btn {
+  background: none;
+  border: none;
+  color: #b3b3b3;
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0; /* 默认隐藏 */
+  transition: opacity 0.2s, color 0.2s;
+}
+
+.playlist-modal-item:hover .playlist-item-delete-btn {
+  opacity: 1; /* 悬停在列表项上时显示 */
+}
+
+.playlist-item-delete-btn:hover {
+  color: #fff;
+}
+
+.drag-handle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #888;
+  cursor: grab;
+  padding: 8px 4px; /* 增大触摸区域 */
+  opacity: 0.5;
+  transition: opacity 0.2s, color 0.2s;
+}
+
+.playlist-modal-item:hover .drag-handle {
+  opacity: 1;
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+  color: #fff;
+}

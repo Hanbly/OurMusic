@@ -1,0 +1,24 @@
+/* MainHeader.css */
+.main-header {
+  position: fixed;
+  top: 0;
+  height: 5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #1c1c1e;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.26);
+  padding: 0 2rem;
+  z-index: 110;
+  
+  /* 关键：left 和 width 由侧边栏状态决定 */
+  left: 60px; /* Changed from 80px to 90px */
+  width: calc(100% - 90px); /* Changed from 80px to 90px */
+  transition: left 0.3s ease-out, width 0.3s ease-out;
+}
+
+
+.main-header.shifted {
+  left: 180px; 
+  width: calc(100% - 200px); 
+}

@@ -1,0 +1,263 @@
+.collection-info-page {
+  padding: 2rem;
+  color: var(--primary-text-color);
+}
+
+.page-status {
+  text-align: center;
+  font-size: 1.2rem;
+  padding: 4rem;
+  color: var(--secondary-text-color);
+}
+
+.page-status.error {
+  color: var(--danger-color);
+}
+
+.collection-info-header {
+  display: flex;
+  gap: 2rem;
+  margin-bottom: 2rem;
+  align-items: flex-end; /* 垂直底部对齐 */
+}
+
+.header__image-container {
+  position: relative;
+  width: 220px;
+  height: 220px;
+  flex-shrink: 0;
+  border-radius: var(--border-radius);
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.header__image-container img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.header__image-container:hover img {
+  transform: scale(1.05);
+}
+
+.header__image-container .play-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  color: white;
+  font-size: 4rem;
+}
+
+.header__image-container:hover .play-overlay {
+  opacity: 1;
+}
+
+.header__details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.header__tag {
+  font-weight: bold;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  color: var(--secondary-text-color);
+}
+
+.header__title {
+  font-size: 3rem;
+  font-weight: 800;
+  margin: 0;
+}
+
+.header__description {
+  font-size: 1rem;
+  color: var(--secondary-text-color);
+  margin: 0;
+}
+
+.header__meta {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 0.5rem;
+}
+
+.header__user {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  color: var(--primary-text-color);
+  text-decoration: none;
+}
+.header__user:hover {
+  text-decoration: underline;
+}
+
+.user__avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.meta__song-count {
+  font-size: 0.9rem;
+  color: var(--secondary-text-color);
+}
+
+.header__actions {
+  margin-top: 1rem;
+}
+
+.action-button.play-all {
+  background-color: var(--primary-purple);
+  color: white;
+  border: none;
+  padding: 0.8rem 1.8rem;
+  border-radius: 25px;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: background-color 0.2s, transform 0.2s;
+}
+
+.action-button.play-all:hover {
+  background-color: var(--secondary-purple);
+  transform: scale(1.03);
+}
+
+/* --- 新增：双栏布局 --- */
+.collection-content-body {
+  display: flex;
+  gap: 2rem; /* 两栏之间的间距 */
+}
+
+/* --- 左侧歌曲列表 --- */
+.music-list-container {
+  flex: 1;
+  min-width: 0; /* 允许flex item收缩 */
+}
+
+.music-list-container .music-list-header {
+  display: grid;
+  grid-template-columns: 40px 2fr 1.5fr 1.5fr 80px; /* 列定义 */
+  gap: 1rem;
+  padding: 0.5rem 1rem;
+  color: var(--secondary-text-color);
+  font-size: 0.85rem;
+  border-bottom: 1px solid var(--border-color);
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+}
+.music-list-container .music-list-header span:first-child {
+  text-align: center;
+}
+
+.music-list-container ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+/* --- 右侧评论区 --- */
+.collection-comments-section {
+  flex: 1;
+  min-width: 0;
+  background-color: var(--container-bg-color);
+  padding: 1.5rem;
+  border-radius: var(--border-radius);
+  display: flex;
+  flex-direction: column;
+  max-height: 70vh; /* 限制最大高度，使其可滚动 */
+}
+
+.comments-section-title {
+  margin: 0 0 1rem 0;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--primary-text-color);
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 1rem;
+  flex-shrink: 0; /* 防止标题被压缩 */
+}
+
+.comments-list-wrapper {
+  flex-grow: 1; /* 占据剩余空间 */
+  overflow-y: auto; /* 关键：使评论列表可滚动 */
+  padding-right: 0.5rem; /* 为滚动条留出空间 */
+}
+
+.no-comments {
+  text-align: center;
+  padding: 2rem;
+  color: var(--secondary-text-color);
+}
+
+.comment-form-footer {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-color);
+  flex-shrink: 0;
+}
+
+/* 沿用 MusicInfo 的评论表单样式 */
+.comment-form {
+    display: flex;
+    gap: 10px;
+}
+.comment-form textarea {
+    flex-grow: 1;
+    background-color: rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 0.75rem;
+    color: var(--primary-text-color);
+    font-family: inherit;
+    font-size: 0.9rem;
+    resize: none;
+    overflow-y: hidden;
+    transition: all 0.2s ease;
+}
+.comment-form textarea:focus {
+    outline: none;
+    border-color: var(--primary-purple);
+    box-shadow: 0 0 0 3px rgba(127, 90, 240, 0.2);
+}
+.comment-form button {
+    background-color: var(--primary-purple);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 0 1.5rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+.comment-form button:hover:not(:disabled) {
+    background-color: var(--secondary-purple);
+}
+.comment-form button:disabled {
+    background-color: #555;
+    cursor: not-allowed;
+}
+.form-error {
+    color: var(--danger-color);
+    font-size: 0.85rem;
+    margin-top: 0.5rem;
+}

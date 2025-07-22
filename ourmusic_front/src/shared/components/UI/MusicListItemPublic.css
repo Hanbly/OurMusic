@@ -1,0 +1,209 @@
+.music-item {
+  list-style: none;
+  display: flex;
+  align-items: center;
+  padding: 8px;
+  border-radius: 6px;
+  transition: background-color 0.2s ease-in-out;
+  scroll-snap-align: start;
+}
+
+.music-item:hover {
+  background-color: #2a2a2a;
+}
+
+.music-item__image {
+  width: 56px;
+  height: 56px;
+  flex-shrink: 0;
+  position: relative;
+  cursor: pointer;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.music-item__image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.music-item__image .play-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  opacity: 0;
+  transition: opacity 0.2s ease-in-out;
+}
+
+.music-item__image .play-overlay::after {
+  color: white;
+  font-size: 24px;
+  transition: opacity 0.2s ease-in-out;
+}
+
+.music-item__image:hover .play-overlay {
+  opacity: 1;
+}
+
+.music-item__info {
+  margin-left: 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  flex-grow: 1;
+  overflow: hidden;
+}
+
+.music-item__info .title {
+  font-size: 1rem;
+  font-weight: 500;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: color 0.2s ease-in-out;
+}
+
+.music-item__info .artist {
+  font-size: 0.875rem;
+  color: #aaa;
+}
+
+.music-item__actions {
+  display: flex;
+  align-items: center;
+  opacity: 0;
+  transition: opacity 0.2s ease-in-out;
+}
+
+.music-item:hover .music-item__actions {
+  opacity: 1;
+}
+
+/* --- 图标对齐问题修复 --- */
+.music-item__actions .icon-button {
+  background: none;
+  border: none;
+  color: #aaa;
+  font-size: 20px; /* SVG图标的尺寸 */
+  cursor: pointer;
+  padding: 8px;
+  text-decoration: none;
+
+  display: inline-flex; /* 使用 inline-flex 保证元素紧凑 */
+  align-items: center;   /* 垂直居中 */
+  justify-content: center; /* 水平居中 (可选, 但能让布局更规整) */
+  gap: 4px;
+  line-height: 1; /* 强制行高为1，避免基线问题 */
+}
+
+.music-item__actions .icon-button:hover {
+  color: #6c63ff;
+  text-decoration: none;
+}
+
+.music-item__link {
+  text-decoration: none; 
+  color: inherit;
+  flex-grow: 1;
+  margin-left: 16px;
+  display: flex; 
+  overflow: hidden;
+}
+
+.count-display {
+  font-size: 0.875rem;
+  line-height: 1; /* 与父元素保持一致 */
+}
+
+.music-item__menu-container {
+  position: relative;
+}
+
+/* --- 正在播放状态的样式 --- */
+
+.music-item__info .title.playing {
+  color: #7f5af0;
+}
+
+.music-item__image .play-overlay.playing {
+  opacity: 1;
+}
+
+.music-item__image .play-overlay.playing::after {
+  opacity: 0;
+}
+
+/* --- 动画流畅度优化 --- */
+
+.sound-wave {
+  display: flex;
+  align-items: flex-end; /* 确保所有柱子底部对齐 */
+  height: 20px; /* 容器高度决定了音波最大高度 */
+  gap: 3px;
+  opacity: 0;
+  transition: opacity 0.2s ease-in-out;
+}
+
+.play-overlay.playing .sound-wave {
+  opacity: 1;
+}
+
+.sound-wave span {
+  width: 4px;
+  height: 100%; /* 占满父容器高度 */
+  background-color: white;
+  border-radius: 2px;
+  transform-origin: bottom; /* 关键：让缩放从底部开始 */
+  will-change: transform; /* 关键：告诉浏览器这个属性要变，准备好GPU */
+  animation: wave 1.2s infinite ease-in-out;
+}
+
+.sound-wave span:nth-child(2) {
+  animation-delay: -1.0s;
+}
+.sound-wave span:nth-child(3) {
+  animation-delay: -0.8s;
+}
+.sound-wave span:nth-child(4) {
+  animation-delay: -0.6s;
+}
+
+/* 使用 transform: scaleY() 代替 height */
+@keyframes wave {
+  0%, 40%, 100% {
+    transform: scaleY(0.2); /* 最小高度为20% */
+  }
+  20% {
+    transform: scaleY(1.0); /* 最大高度为100% */
+  }
+}
+
+.form-button-cancel {
+    width: 100%;
+    padding: 0.8rem;
+    font-size: 1rem;
+    font-weight: bold;
+    border: none;
+    background-color: var(--primary-purple);
+    color: var(--primary-text-color);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.form-button-cancel:hover {
+    background-color: var(--secondary-purple);
+}
+
+.form-button-cancel:disabled {
+    background-color: var(--border-color);
+    cursor: not-allowed;
+}

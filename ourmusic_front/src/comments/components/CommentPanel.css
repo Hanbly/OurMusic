@@ -1,0 +1,241 @@
+/* CommentPanel.css - 侧滑评论面板样式 */
+
+.comment-panel {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 420px;
+    height: 100%;
+    background-color: #181818;
+    color: #fff;
+    box-shadow: -5px 0 15px rgba(0, 0, 0, 0.5);
+    z-index: 1050;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    border-bottom: 1px solid #282828;
+    flex-shrink: 0;
+}
+
+.panel-header h3 {
+    margin: 0;
+    font-size: 1.25rem;
+}
+
+.close-button {
+    background: none;
+    border: none;
+    color: #b3b3b3;
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 4px;
+    line-height: 1;
+    transition: color 0.2s;
+}
+
+.close-button:hover {
+    color: #fff;
+}
+
+/* 评论列表区域 */
+.comment-list-section {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 16px 20px;
+}
+
+.comment-list-section ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.no-comments {
+    text-align: center;
+    color: #b3b3b3;
+    margin-top: 40px;
+}
+
+/* 底部评论表单 */
+.panel-footer {
+    padding: 16px 20px;
+    border-top: 1px solid #282828;
+    background-color: #181818;
+    flex-shrink: 0;
+}
+
+.comment-form {
+    display: flex;
+    gap: 10px;
+    align-items: flex-end; /* 使得按钮和输入框底部对齐 */
+}
+
+.comment-form textarea {
+    flex-grow: 1;
+    background-color: #333;
+    border: 1px solid #555;
+    border-radius: 6px;
+    color: #fff;
+    padding: 10px;
+    font-size: 0.9rem;
+    resize: none;
+    overflow-y: hidden; /* 防止出现滚动条 */
+    min-height: 40px; /* 初始高度 */
+    max-height: 120px; /* 最大高度 */
+    line-height: 1.4;
+    transition: border-color 0.2s;
+}
+.comment-form textarea:focus {
+    outline: none;
+    border-color: #8a2be2;
+}
+.comment-form textarea:disabled {
+    cursor: not-allowed;
+    background-color: #282828;
+}
+
+.comment-form button {
+    background-color: #8a2be2;
+    color: #fff;
+    border: none;
+    border-radius: 500px;
+    padding: 10px 20px;
+    font-weight: 700;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background-color 0.2s;
+}
+.comment-form button:hover {
+    background-color: #9932cc;
+}
+.comment-form button:disabled {
+    background-color: #555;
+    color: #999;
+    cursor: not-allowed;
+}
+
+.form-error {
+    color: #ff4d4d;
+    font-size: 0.8rem;
+    margin-top: 8px;
+    text-align: right;
+}
+
+/* 单个评论项 - 基础布局 */
+.comment-item {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start; /* 顶部对齐，防止内容过多时头像错位 */
+    padding: 12px 4px; /* 增加一点内边距，让评论之间更清爽 */
+    border-bottom: 1px solid #282828; /* 为每个评论添加分隔线 */
+}
+
+/* 如果是最后一个评论，去掉底部分隔线 */
+.comment-list-section ul li:last-child .comment-item {
+    border-bottom: none;
+}
+
+
+/* 头像链接容器 */
+.comment-avatar-link {
+    flex-shrink: 0; /* 防止头像被压缩 */
+}
+
+.comment-user-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover; /* 保证图片不变形 */
+    transition: transform 0.2s ease-out;
+}
+.comment-avatar-link:hover .comment-user-avatar {
+    transform: scale(1.1); /* 鼠标悬停时头像放大效果 */
+}
+
+
+/* 评论主内容区 */
+.comment-main {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px; /* 内容块之间的垂直间距 */
+}
+
+/* 新增：评论头部，用于放置用户名和时间 */
+.comment-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+}
+
+/* 用户名链接 */
+.comment-user-name-link {
+    text-decoration: none;
+}
+
+.comment-user-name {
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: #fff;
+    transition: color 0.2s;
+}
+.comment-user-name-link:hover .comment-user-name {
+    color: #b3b3b3; /* 悬停时变色 */
+}
+
+/* 时间戳样式 */
+.comment-time {
+    font-size: 0.75rem;
+    color: #a0a0a0;
+    white-space: nowrap; /* 防止时间换行 */
+}
+
+
+/* 评论内容 */
+.comment-content {
+    font-size: 0.95rem; /* 稍微调整字体大小 */
+    line-height: 1.6; /* 增加行高，提升可读性 */
+    color: #e0e0e0;
+    margin: 0; /* 移除默认的 margin */
+    word-wrap: break-word;
+}
+
+/* 评论底部 */
+.comment-footer {
+    display: flex;
+    justify-content: flex-end; /* 让点赞按钮靠右 */
+    align-items: center;
+}
+
+/* 点赞按钮 */
+.comment-like-button {
+    background: none;
+    border: none;
+    color: #b3b3b3;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px;
+    border-radius: 20px; /* 圆角效果 */
+    transition: background-color 0.2s, color 0.2s;
+    font-size: 0.85rem;
+}
+.comment-like-button:hover {
+    background-color: #282828;
+    color: #fff;
+}
+.comment-like-button svg {
+    font-size: 1.1rem; /* 调整图标大小 */
+}

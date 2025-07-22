@@ -1,0 +1,146 @@
+/* src/components/shared/EditModal.css */
+
+/* 遮罩层 */
+.edit-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: var(--background-overlay, rgba(0, 0, 0, 0.75));
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1200;
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* 模态框内容 */
+.edit-modal-content {
+  background: #ffffff;
+  color: #333;
+  padding: 0; /* 移除内边距，交由 header 和 body 控制 */
+  border-radius: 16px;
+  box-shadow: 0 10px 35px rgba(0, 0, 0, 0.2);
+  width: 100%;
+  max-width: 750px; /* 可以根据需要调整 */
+  position: relative;
+  animation: slideIn 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  display: flex;
+  flex-direction: column;
+
+  max-height: 90vh;
+}
+
+/* 头部区域 */
+.edit-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 2rem;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.edit-modal-title {
+  color: var(--primary-purple, #7f5af0);
+  margin: 0;
+  font-size: 1.8rem;
+  font-weight: 600;
+}
+
+.edit-modal-close-button {
+  background: none;
+  border: none;
+  font-size: 2.5rem;
+  line-height: 1;
+  color: #ccc;
+  cursor: pointer;
+  transition: color 0.3s, transform 0.3s;
+}
+
+.edit-modal-close-button:hover {
+  color: #888;
+  transform: rotate(90deg);
+}
+
+/* 主体区域 */
+.edit-modal-body {
+  padding: 2rem;
+
+  flex-grow: 1;
+  overflow-y: auto;
+}
+
+/* ---- 为传入的 children 提供统一的表单样式 ---- */
+
+/* 表单通用组 */
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-group label {
+  display: block;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  color: #555;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid #dcdcdc;
+  border-radius: 8px;
+  font-size: 1rem;
+  box-sizing: border-box; /* 确保 padding 不会撑大宽度 */
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: var(--primary-purple, #7f5af0);
+  box-shadow: 0 0 0 3px rgba(127, 90, 240, 0.2);
+}
+
+/* 按钮样式 - 复用个人页面的风格 */
+.form-button {
+  width: 100%;
+  background-color: transparent;
+  border: 2px solid var(--primary-purple, #7f5af0);
+  color: var(--primary-purple, #7f5af0);
+  padding: 12px 20px;
+  margin-top: 1rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+}
+
+.form-button:hover {
+  background-color: var(--primary-purple, #7f5af0);
+  color: var(--primary-text-color, #fff);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(127, 90, 240, 0.4);
+}
+
+/* 状态消息 */
+.form-error, .form-success {
+  text-align: center;
+  margin-top: 1rem;
+  padding: 0.75rem;
+  border-radius: 6px;
+}
+.form-error {
+  color: var(--error-red, #e53e3e);
+  background-color: rgba(229, 62, 62, 0.1);
+}
+.form-success {
+  color: var(--success-green, #38a169);
+  background-color: rgba(56, 161, 105, 0.1);
+}
+
+
+/* 动画定义 */
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes slideIn { from { transform: translateY(-30px) scale(0.98); opacity: 0; } to { transform: translateY(0) scale(1); opacity: 1; } }

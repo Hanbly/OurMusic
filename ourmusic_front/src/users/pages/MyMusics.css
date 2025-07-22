@@ -1,0 +1,494 @@
+/* --- 全局设计体系 (Design System) --- */
+:root {
+  /* 采用了更具层次感的深色主题，而不是纯黑 */
+  --background-color: #16161a;      /* 深灰黑背景 */
+  --container-bg-color: #242629;   /* 卡片/容器背景，比主背景稍亮 */
+  --primary-purple: #7f5af0;        /* 主要的紫色，用于强调和交互 */
+  --secondary-purple: #9d4edd;      /* 次要的紫色，用于边框或点缀 */
+  --primary-text-color: #fffffe;    /* 主要文字颜色，亮白色 */
+  --secondary-text-color: #94a1b2;  /* 次要文字颜色，柔和的灰蓝色，用于描述 */
+  --border-color: #3a3a3c;          /* 边框颜色，比之前的 #282828 更柔和 */
+  --danger-color: #e53e3e;          /* 错误提示颜色 */
+  --transition-speed: 0.3s;
+  --border-radius: 12px;           /* 更大的圆角，更现代 */
+}
+
+/* 确保页面背景应用了新的颜色 */
+body {
+  background-color: var(--background-color);
+}
+
+/* --- 主容器 --- */
+.my-musics {
+  max-width: 900px;
+  margin: 50px auto; /* 修改为居中布局 */
+  padding: 0; /* 内边距移动到卡片上 */
+  color: var(--primary-text-color);
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem; /* 模块之间的间距 */
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+
+  padding-bottom: var(--player-height-with-gap);
+}
+
+/* --- 加载/错误状态提示 --- */
+.my-musics-status {
+  text-align: center;
+  font-size: 1.2rem;
+  padding: 4rem;
+  color: var(--secondary-text-color);
+}
+.my-musics-status.error {
+  color: var(--danger-color);
+}
+
+/* --- 用户信息卡片 --- */
+.profile-card {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  background-color: var(--container-bg-color);
+  padding: 2rem;
+  border-radius: var(--border-radius);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+.profile-card__avatar {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%; /* 圆形头像 */
+  object-fit: cover; /* 保证图片不变形 */
+  border: 4px solid var(--primary-purple);
+  box-shadow: 0 0 15px rgba(127, 90, 240, 0.4); /* 添加紫色辉光效果 */
+}
+
+.profile-card__info {
+  flex-grow: 1; /* 占据剩余空间 */
+}
+
+.profile-card__name {
+  margin: 0 0 0.5rem 0;
+  font-size: 2.2rem;
+  font-weight: 600;
+  color: var(--primary-text-color);
+}
+
+.profile-card__description {
+  margin: 0;
+  font-size: 1.1rem;
+  line-height: 1.6;
+  color: var(--secondary-text-color);
+}
+
+/* --- 历史记录按钮 (重点优化) --- */
+.profile-card__history-button {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  background-color: transparent; /* 透明背景，幽灵按钮样式 */
+  color: var(--primary-purple);  /* 紫色文字 */
+  border: 2px solid var(--primary-purple); /* 紫色边框 */
+  padding: 0.6rem 1.2rem;
+  border-radius: 8px; /* 方角更显专业 */
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-decoration: none; /* 移除 Link 的下划线 */
+  transition: all var(--transition-speed) ease;
+}
+
+.profile-card__history-button:hover {
+  background-color: var(--primary-purple); /* 悬浮时填充背景色 */
+  color: var(--primary-text-color); /* 文字变白 */
+  transform: translateY(-2px); /* 轻微上浮效果 */
+  box-shadow: 0 4px 10px rgba(127, 90, 240, 0.3);
+}
+
+.profile-card__history-button svg {
+  font-size: 1.1em; /* 调整图标大小 */
+}
+
+
+/* --- 选项卡和输出区域 --- */
+.musics-output-container {
+  background-color: var(--container-bg-color);
+  padding: 1.5rem 2rem;
+  border-radius: var(--border-radius);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+.musics-output__tabs {
+  display: flex;
+  gap: 1.5rem;
+  border-bottom: 1px solid var(--border-color);
+  margin-bottom: 1.5rem;
+}
+
+.musics-output__button {
+  background: none;
+  border: none;
+  color: var(--secondary-text-color); /* 默认使用次要文字颜色 */
+  font-size: 1.2rem; /* 增大字体 */
+  font-weight: 600;
+  padding: 0.5rem 0.2rem; /* 减少水平内边距，让下划线更贴合文字 */
+  margin-bottom: -1px; /* 让下划线与底部边框重合 */
+  cursor: pointer;
+  position: relative;
+  transition: color var(--transition-speed) ease;
+}
+
+.musics-output__button:hover {
+  color: var(--primary-text-color);
+}
+
+.musics-output__button.active {
+  color: var(--primary-purple); /* 激活状态为主题紫色 */
+}
+
+/* 激活状态的下划线 */
+.musics-output__button::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background-color: var(--primary-purple);
+  transform: scaleX(0);
+  transition: transform var(--transition-speed) ease-in-out;
+}
+
+.musics-output__button.active::after {
+  transform: scaleX(1);
+}
+
+/* 修改 tabs 容器，使其支持右侧的按钮 */
+.musics-output__tabs.with-button {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.tabs-nav {
+  display: flex;
+  gap: 1.5rem;
+}
+
+/* 新的创建歌单按钮样式 */
+.create-collection-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: var(--primary-purple); /* 确保你的 CSS 变量已定义 */
+  color: var(--primary-text-color); /* 确保你的 CSS 变量已定义 */
+  border: none;
+  padding: 0.6rem 1.2rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.create-collection-button:hover {
+  background-color: var(--secondary-purple); /* 确保你的 CSS 变量已定义 */
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(127, 90, 240, 0.3);
+}
+
+.create-collection-button svg {
+  font-size: 0.9em;
+}
+
+/* 你可能需要为 Modal 内的表单添加样式，如果它们还没被全局样式覆盖的话 */
+.form-group {
+  margin-bottom: 1rem;
+}
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+}
+.form-group input[type="text"] {
+  width: 100%;
+  padding: 0.75rem;
+  /* ... 其他输入框样式 ... */
+}
+.form-error {
+  color: #e53e3e;
+  margin-top: 1rem;
+}
+.form-button {
+  width: 100%;
+  padding: 0.8rem;
+  /* ... 其他按钮样式 ... */
+}
+.image-upload-preview {
+  /* ... 上传预览样式 ... */
+  border: 2px dashed #ccc;
+  padding: 2rem;
+  text-align: center;
+  cursor: pointer;
+}
+.toggle-switch-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* 新增：用于包裹右上角操作按钮的容器 */
+.action-buttons-group {
+  display: flex;
+  gap: 0.75rem; /* 按钮之间的间距 */
+}
+
+/* 将之前的 .create-collection-button 改为更通用的 .create-button */
+.create-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: var(--primary-purple);
+  color: var(--primary-text-color);
+  border: none;
+  padding: 0.6rem 1.2rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.create-button:hover {
+  background-color: var(--secondary-purple);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(127, 90, 240, 0.3);
+}
+
+.create-button svg {
+  font-size: 0.9em;
+}
+
+/* 新增：分享音乐表单中的文件上传按钮样式 */
+.file-upload-button {
+  width: 100%;
+  padding: 0.75rem;
+  background-color: rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  color: var(--secondary-text-color);
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.file-upload-button:hover {
+  border-color: var(--primary-purple);
+  color: var(--primary-purple);
+}
+
+/* 为表单设置一个宽度，使其在 Modal 中表现更好 */
+.share-music-form {
+  width: 650px; /* 你可以根据喜好调整这个宽度 */
+  max-width: 90vw; /* 在小屏幕上不要超出视口 */
+}
+
+/* 1. 主布局容器，使用 Flexbox 实现左右分栏 */
+.form-layout-container {
+  display: flex;
+  gap: 2rem; /* 控制左右两栏之间的间距 */
+  margin-bottom: 1.5rem; /* 与底部的提交按钮保持距离 */
+}
+
+/* 2. 左侧栏 (文件上传区) */
+.form-column-left {
+  flex: 0 0 200px; /* 固定宽度为 200px，不参与空间分配 */
+  display: flex;
+  flex-direction: column;
+  gap: 1rem; /* 内部两个上传区域的间距 */
+}
+
+/* 3. 右侧栏 (文本信息区) */
+.form-column-right {
+  flex: 1; /* 占据所有剩余的可用空间 */
+  display: flex;
+  flex-direction: column;
+}
+
+/* 4. 用于将风格和年份放在一行的容器 */
+.form-row {
+  display: flex;
+  gap: 1rem; /* 两个输入框之间的间距 */
+}
+
+.form-row .form-group {
+  flex: 1; /* 让行内的表单组平分空间 */
+  margin-bottom: 0; /* 移除底边距，因为 .form-row 已经处理了间距 */
+}
+
+
+/* --- 优化文件上传区域的视觉效果 --- */
+
+/* 继承你原有的 .image-upload-preview 并应用新尺寸和样式 */
+.image-upload-preview.large {
+  width: 200px;
+  height: 200px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 12px;
+  overflow: hidden; /* 确保预览图不会超出圆角 */
+  background-color: rgba(0, 0, 0, 0.2);
+  border-style: dashed; /* 确保是虚线 */
+  padding: 0; /* 移除可能继承的内边距 */
+}
+
+/* 预览图片样式 */
+.image-upload-preview.large img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* “点击上传”占位符的样式 */
+.upload-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--secondary-text-color);
+  pointer-events: none; /* 防止内部元素干扰点击事件 */
+}
+
+.upload-placeholder svg {
+  font-size: 2rem;
+}
+
+.form-button-secondary {
+  background-color: transparent;
+  color: var(--primary-purple);
+  border: 2px solid var(--primary-purple);
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: all var(--transition-speed) ease;
+}
+
+.form-button-secondary:hover:not(:disabled) {
+  background-color: var(--primary-purple);
+  color: var(--primary-text-color);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(127, 90, 240, 0.3);
+}
+.form-button-secondary:disabled {
+  border-color: var(--border-color);
+  color: var(--secondary-text-color);
+  cursor: not-allowed;
+}
+
+
+.unified-upload-section {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding-bottom: 1.5rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.unified-upload-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.image-upload-preview.unified-preview {
+  width: 60px;
+  height: 60px;
+  padding: 0;
+  border-radius: 8px;
+  margin-left: auto;
+}
+.unified-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.add-files-section {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.file-count-indicator {
+  display: block;
+  margin-top: 0.75rem;
+  font-size: 0.9rem;
+  color: var(--secondary-text-color);
+}
+
+.music-item-header-paginated {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+.music-item-header-paginated h4 {
+  margin: 0;
+  font-size: 1.1rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--secondary-text-color);
+}
+.remove-item-button {
+  background: transparent;
+  border: none;
+  color: var(--secondary-text-color);
+  font-size: 1.5rem;
+  line-height: 1;
+  padding: 0 0.5rem;
+  cursor: pointer;
+  transition: color var(--transition-speed) ease;
+}
+.remove-item-button:hover {
+  color: var(--danger-color);
+}
+.item-error {
+  text-align: left;
+  margin-top: -0.5rem;
+  margin-bottom: 1rem;
+}
+
+.pagination-controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 2rem 0;
+}
+.pagination-controls .form-button-secondary {
+  min-width: 38px;
+  height: 38px;
+  padding: 0.5rem;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+}
+.pagination-controls .form-button-secondary.active {
+  background-color: var(--primary-purple);
+  color: var(--primary-text-color);
+  border-color: var(--primary-purple);
+  transform: none;
+  box-shadow: none;
+}
+.empty-state-message {
+    padding: 3rem 1rem;
+    text-align: center;
+    color: var(--secondary-text-color);
+    border: 2px dashed var(--border-color);
+    border-radius: var(--border-radius);
+    margin: 1rem 0;
+}

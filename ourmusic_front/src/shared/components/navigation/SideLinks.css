@@ -1,0 +1,66 @@
+/* SideLinks.css */
+.side-links {
+  list-style: none;
+  margin: 1rem 0;
+  padding: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.side-links li {
+  width: 100%;
+}
+
+.side-links a {
+  display: flex;
+  align-items: center;
+  color: #e0e0e0;
+  text-decoration: none;
+  padding: 0.75rem 1.5rem;
+  transition: background-color 0.2s, color 0.2s;
+  white-space: nowrap; /* 防止文字换行 */
+  border-radius: 8px;
+  margin: 0.5rem; /* 上下左右都有一点边距 */
+  overflow: hidden; /* 隐藏溢出的内容 */
+}
+
+.side-links a:hover,
+.side-links a:active,
+.side-links a.active {
+  background-color: #3c3c43;
+  color: #ffffff;
+}
+
+.side-links a:hover {
+  background-color: #5a5a60;
+}
+
+.side-links__icon {
+  font-size: 1.5rem;
+  min-width: 2rem; /* 使用 min-width 防止图标被压缩 */
+  text-align: center;
+  margin-right: 1.5rem;
+  transition: margin-right 0.3s ease-out;
+}
+
+.side-links__text {
+  font-size: 1rem;
+  opacity: 1;
+  transition: opacity 0.2s ease-out;
+}
+
+/* 当侧边栏收缩时 (没有 .expanded 类) */
+.side-drawer:not(.expanded) .side-links a {
+  justify-content: center; /* 图标居中 */
+  padding: 0.75rem 0;
+}
+
+.side-drawer:not(.expanded) .side-links__icon {
+  margin-right: 0; /* 移除右边距 */
+}
+
+.side-drawer:not(.expanded) .side-links__text {
+  opacity: 0; /* 隐藏文字 */
+  width: 0;   /* 确保不占空间 */
+}

@@ -1,0 +1,22 @@
+:root {
+  --background-color: #16161a;      /* 深黑背景 */
+  --container-bg-color: #242629;   /* 容器背景，比主背景稍亮 */
+  --primary-purple: #7f5af0;        /* 主要的紫色，用于强调和交互 */
+  --secondary-purple: #9d4edd;      /* 次要的紫色，用于边框或点缀 */
+  --primary-text-color: #fffffe;    /* 主要文字颜色，亮白色 */
+  --secondary-text-color: #94a1b2;  /* 次要文字颜色，灰色，用于描述等 */
+  --border-color: #404040;          /* 边框颜色 */
+
+  --player-height: 80px;          /* 播放器高度 */
+  --player-height-with-gap: 90px;    /* 播放器高度，包含间隙 */
+}
+
+/* 你可以顺便设置一下全局的背景色和文字颜色 */
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--background-color);
+  color: var(--primary-text-color);
+}

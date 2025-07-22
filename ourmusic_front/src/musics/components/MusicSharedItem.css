@@ -1,0 +1,65 @@
+.music-shared-item {
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 10px;
+  border-radius: 8px;
+  background-color: #181818;
+  transition: background-color 0.2s ease;
+}
+
+.music-shared-item:hover {
+  background-color: #282828;
+}
+
+.music-shared-item__image {
+  width: 50px;
+  height: 50px;
+  flex-shrink: 0;
+}
+
+.music-shared-item__image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 4px;
+}
+
+.music-shared-item__link {
+  flex-grow: 1;
+  text-decoration: none;
+  color: inherit;
+}
+
+.music-shared-item__info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.music-shared-item__info .title {
+  font-weight: 500;
+  color: #fff;
+}
+
+.music-shared-item__info .artist {
+  font-size: 0.85rem;
+  color: #b3b3b3;
+}
+
+.music-shared-item__actions {
+  display: flex;
+  gap: 8px;
+}
+
+.music-shared-item__actions .icon-button {
+  background: none;
+  border: none;
+  color: #b3b3b3;
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+.music-shared-item__actions .icon-button:hover {
+  color: #fff;
+}

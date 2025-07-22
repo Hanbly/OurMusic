@@ -1,0 +1,14 @@
+/* MusicList.css */
+
+.music-recommend-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-auto-flow: column; 
+  grid-template-rows: repeat(3, 1fr); 
+  
+  gap: 0 var(--item-recommend-gap); /* */
+
+  grid-auto-columns: var(--item-recommend-width); /* */
+}

@@ -1,0 +1,19 @@
+/* SideDrawer.css */
+.side-drawer {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 120;
+  height: 100vh;
+  background: #1c1c1e;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.26);
+  width: 90px; /* 收缩时的宽度，以适应图标 */
+  transition: width 0.3s ease-out;
+  overflow-x: hidden;
+  padding-top: 5rem;
+}
+
+/* 侧边栏展开时的样式 */
+.side-drawer.expanded {
+  width: 200px; /* 展开时的宽度 */
+}

@@ -1,0 +1,172 @@
+/* src/collects/components/CollectionSelector.css (新文件) */
+
+/* 列表容器 */
+.collection-selector-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  max-height: 40vh; /* 限制最大高度，超出部分可滚动 */
+  overflow-y: auto; /* 允许垂直滚动 */
+  /* 为滚动条美化（可选，但推荐） */
+  scrollbar-width: thin;
+  scrollbar-color: #ccc #f1f1f1;
+}
+
+/* 滚动条 Webkit (Chrome, Safari) */
+.collection-selector-list::-webkit-scrollbar {
+  width: 8px;
+}
+.collection-selector-list::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+.collection-selector-list::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 4px;
+}
+.collection-selector-list::-webkit-scrollbar-thumb:hover {
+  background: #aaa;
+}
+
+
+/* 列表中的每一项 */
+.collection-selector-item {
+  display: flex;
+  align-items: center;
+  padding: 12px;
+  border-radius: 8px;
+  border: 2px solid transparent; /* 预留边框位置，防止选中时跳动 */
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.collection-selector-item:hover {
+  background-color: #f5f5f5; /* 轻微的悬停背景色 */
+}
+
+/* 选中状态的样式 */
+.collection-selector-item.selected {
+  background-color: rgba(127, 90, 240, 0.1); /* 主题淡紫色 */
+  border-color: var(--primary-purple, #7f5af0); /* 主题紫色边框 */
+  font-weight: 600;
+}
+
+/* 列表项中的图片 */
+.collection-selector-item__image {
+  width: 50px;
+  height: 50px;
+  border-radius: 6px;
+  object-fit: cover;
+  margin-right: 16px;
+  flex-shrink: 0;
+}
+
+/* 列表项中的名称 */
+.collection-selector-item__name {
+  color: #333;
+}
+.collection-selector-item.selected .collection-selector-item__name {
+    color: var(--primary-purple, #7f5af0); /* 选中时文字也变色 */
+}
+
+/* “加载中”或“列表为空”的状态文本样式 */
+.selector-status {
+  text-align: center;
+  color: #888;
+  padding: 2rem 1rem;
+}
+
+
+/* "创建新歌单" 按钮的特殊样式 */
+.collection-selector-item.create-new {
+  font-weight: 600;
+  color: var(--primary-purple, #7f5af0);
+  justify-content: center; /* 文本居中 */
+  border: 2px dashed #ccc;
+}
+
+.collection-selector-item.create-new:hover {
+  border-color: var(--primary-purple, #7f5af0);
+  background-color: rgba(127, 90, 240, 0.05);
+}
+
+
+/* --- 滑动开关 (Toggle Switch) 的样式 --- */
+.toggle-switch-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 50px;
+  height: 28px;
+}
+
+/* 隐藏原生的 checkbox */
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+/* 滑块的背景 */
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: .4s;
+  border-radius: 28px;
+}
+
+/* 滑块的小圆点 */
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 20px;
+  width: 20px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  transition: .4s;
+  border-radius: 50%;
+}
+
+/* 当 checkbox 被选中时，改变背景色和滑块位置 */
+input:checked + .slider {
+  background-color: var(--primary-purple, #7f5af0);
+}
+
+input:checked + .slider:before {
+  transform: translateX(22px);
+}
+
+/* --- 图片上传预览样式 --- */
+.image-upload-preview {
+  width: 100px;
+  height: 100px;
+  border: 2px dashed #ccc;
+  border-radius: 8px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  margin-bottom: 1rem;
+  overflow: hidden; /* 确保预览图不超出边界 */
+}
+.image-upload-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.image-upload-preview span {
+  color: #888;
+  font-size: 0.9rem;
+}

@@ -1,0 +1,119 @@
+.music-genre-search-page {
+  padding: 30px 40px;
+  color: #fff;
+  height: 100%;
+  overflow-y: auto;
+  box-sizing: border-box;
+
+  padding-bottom: var(--player-height-with-gap);
+}
+
+/* 自定义滚动条样式 */
+.music-genre-search-page::-webkit-scrollbar {
+  width: 8px;
+}
+.music-genre-search-page::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+}
+.music-genre-search-page::-webkit-scrollbar-thumb {
+  background: #444;
+  border-radius: 4px;
+}
+.music-genre-search-page::-webkit-scrollbar-thumb:hover {
+  background: #666;
+}
+
+.search-header h1 {
+  font-size: 2.5rem;
+  font-weight: 800;
+  margin-bottom: 0.5rem; /* 减小与副标题的间距 */
+  padding-bottom: 0;
+  border-bottom: none; /* 移除 h1 的下划线，让页面更干净 */
+}
+
+/* **新增样式：为副标题设计，突出风格主题** */
+.search-subtitle {
+  font-size: 1rem;
+  color: #8e8e93;
+  margin-top: 0;
+  margin-bottom: 30px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1); /* 将下划线移到副标题下方 */
+}
+
+/* 加载、错误、空状态的通用样式 (完全复用) */
+.search-status-feedback {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 40vh;
+  color: #8e8e93;
+  font-size: 18px;
+}
+
+.search-status-feedback.error {
+  color: #ff453a;
+}
+
+.spinner-icon {
+  font-size: 48px;
+  margin-bottom: 20px;
+  animation: spin 1.5s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* 搜索结果容器 (完全复用) */
+.search-results-container {
+  display: flex;
+  flex-direction: column;
+  gap: 40px; /* 板块之间的间距 */
+}
+
+.search-results-section {
+  width: 100%;
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 24px;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+  position: relative;
+}
+
+.section-title::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 50px;
+  height: 4px;
+  background-color: #a972ff;
+  border-radius: 2px;
+}
+
+/* 音乐列表容器 (完全复用) */
+.music-list-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* 歌单列表容器 (完全复用) */
+.collection-list-container {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); 
+  gap: 24px;
+}

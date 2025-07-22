@@ -1,0 +1,49 @@
+spring:
+  application:
+    name: ourmusic_api
+  datasource:
+    url: jdbc:mysql://localhost:3306/our_music_db?serverTimezone=UTC&characterEncoding=UTF-8
+    username: root
+    password: 88888888
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  data:
+    redis:
+      host: 127.0.0.1
+      port: 6379
+      database: 0
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        format_sql: true
+    defer-datasource-initialization: true
+    show-sql: true
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 500MB
+  mail:
+    username: 2905651528@qq.com
+    password: lrktocqpyptnddee
+    host: smtp.qq.com
+    port: 465
+    protocol: smtps
+    default-encoding: UTF-8
+    properties:
+      mail:
+        smtp:
+          socketFactory:
+            ## SSL ????
+            class: javax.net.ssl.SSLSocketFactory
+        ## ???? debug????????????????
+        debug: true
+
+server:
+  port: 8080
+
+minio:
+  endpoint: http://localhost:9000
+  access-key: hanbly
+  secret-key: 88888888
+  bucket-name: om-files

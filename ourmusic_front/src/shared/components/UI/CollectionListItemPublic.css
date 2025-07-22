@@ -1,0 +1,172 @@
+/* --- 基础布局和样式 (源自 CollectionItem.css) --- */
+.collection-list-item-public {
+  height: 140px;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  padding: 20px;
+  border-radius: 16px;
+  background-color: #181818;
+  transition: background-color 0.2s ease;
+  flex-shrink: 0; 
+  box-sizing: border-box;
+}
+
+.collection-list-item-public:hover {
+  background-color: #282828;
+}
+
+.collection-list-item-public__image {
+  width: 100px;
+  height: 100px;
+  flex-shrink: 0;
+  position: relative; 
+  overflow: hidden; 
+  border-radius: 8px;
+}
+
+.collection-list-item-public__image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.collection-list-item-public__link {
+  flex-grow: 1;
+  text-decoration: none;
+  color: inherit;
+  overflow: hidden; /* 防止内容溢出影响布局 */
+}
+
+.collection-list-item-public__info {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.collection-list-item-public__info .title {
+  font-size: 1.2rem;
+  font-weight: 500;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.collection-list-item-public__info .collector {
+  font-size: 1rem;
+  color: #b3b3b3;
+}
+
+/* --- 播放按钮遮罩 (源自 CollectionItem.css) --- */
+.play-overlay-button {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5); 
+  border: none;
+  border-radius: 8px; 
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  opacity: 0;
+  transform: translateY(10px); 
+  transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out;
+}
+
+.collection-list-item-public:hover .play-overlay-button {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.play-overlay-button .play-icon {
+  color: white;
+  font-size: 32px; 
+  pointer-events: none; 
+}
+
+/* --- 新增的交互按钮和菜单样式 (源自 MusicListItemPublic.css 并适配) --- */
+
+.collection-list-item-public__actions {
+  display: flex;
+  align-items: center;
+  gap: 16px; /* 按钮之间的间距 */
+}
+
+.collection-list-item-public__actions .icon-button {
+  background: none;
+  border: none;
+  color: #b3b3b3;
+  font-size: 22px; /* 稍微调大图标尺寸以适应布局 */
+  cursor: pointer;
+  padding: 8px;
+  display: flex;
+  align-items: center; 
+  gap: 6px; /* 图标和数字之间的间距 */
+  transition: color 0.2s ease;
+  text-decoration: none;
+}
+
+.collection-list-item-public__actions .icon-button:hover {
+  color: #fff;
+  text-decoration: none;
+}
+
+.count-display {
+  font-size: 1rem; /* 数字大小 */
+  font-weight: 400;
+  color: #b3b3b3;
+}
+
+.icon-button:hover .count-display {
+    color: #fff; /* 悬停时数字也变白 */
+}
+
+/* 菜单容器，用于定位 */
+.menu-container {
+  position: relative; /* 为绝对定位的菜单提供参照物 */
+}
+
+/* 下拉菜单样式 (通用，可以放在全局CSS中) */
+.dropdown-menu {
+  background-color: #282828;
+  color: #eee;
+  border: 1px solid #404040;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  list-style: none;
+  padding: 0.5rem 0;
+  margin: 0;
+  min-width: 180px;
+  animation: menu-fade-in 0.15s ease-out forwards;
+}
+
+.dropdown-menu li {
+  padding: 0.75rem 1.25rem;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  transition: background-color 0.2s ease;
+}
+
+.dropdown-menu li:hover {
+  background-color: #3e3e3e;
+}
+
+@keyframes menu-fade-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}

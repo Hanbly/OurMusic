@@ -1,0 +1,82 @@
+# Created for the OurMusic Project (Spring Boot + React)
+
+# ===================================================
+# General ignores for IDEs, OS, and Logs
+# ===================================================
+
+# IDE configuration files
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+nbproject/
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Log files
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+hs_err_pid*
+
+
+# ===================================================
+# Backend (ourmusic_api - Java / Spring Boot / Maven)
+# ===================================================
+
+# Maven build output directory
+/ourmusic_api/target/
+
+# Compiled Java class files (covered by target/, but good to have)
+/ourmusic_api/**/*.class
+
+# Package files
+/ourmusic_api/*.jar
+/ourmusic_api/*.war
+
+# Local configuration files that should not be committed
+# It's a good practice to use profiles for sensitive data
+/ourmusic_api/src/main/resources/application-local.properties
+/ourmusic_api/src/main/resources/application-dev.properties
+
+# Eclipse specific files
+.classpath
+.project
+.settings/
+
+
+# ===================================================
+# Frontend (ourmusic_front - Node.js / React)
+# ===================================================
+
+# Dependencies
+/ourmusic_front/node_modules/
+
+# Build output
+/ourmusic_front/build/
+/ourmusic_front/dist/
+
+# Local environment variables
+# Create React App uses these for local secrets
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Test reports
+/ourmusic_front/coverage/
+
+# Misc
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
+
+docker-data/

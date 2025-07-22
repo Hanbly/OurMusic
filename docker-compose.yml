@@ -1,0 +1,42 @@
+version: '3.7'
+
+services:
+  minio:
+    image: minio/minio
+    container_name: om-files
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - ./docker-data/minio_data:/data   # <-- 注意：这里的路径要换成你自己的实际路径
+    environment:
+      MINIO_ROOT_USER: hanbly
+      MINIO_ROOT_PASSWORD: 88888888 # <-- 生产环境请务必修改
+    command: server /data --console-address ":9001"
+
+
+ # MySQL 服务定义
+  mysql:
+    image: mysql:8.0
+    container_name: om-db
+    restart: always # 容器退出时总是自动重启
+    environment:
+      MYSQL_ROOT_PASSWORD: 88888888 # !! 在这里设置你的MySQL root密码
+      MYSQL_DATABASE: our_music_db
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./docker-data/mysql:/var/lib/mysql
+      - ./docker-data/mysql-conf/my.cnf:/etc/mysql/conf.d/my.cnf
+      - ./docker-data/mysql-init/data.sql:/docker-entrypoint-initdb.d/data.sql
+
+  # Redis 服务定义
+  redis:
+    image: redis
+    container_name: om-redis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./docker-data/redis:/data
+    command: redis-server --appendonly yes # 开启AOF持久化

@@ -1,0 +1,266 @@
+.global-player-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: var(--player-height);
+  background-color: #181818;
+  color: white;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 20px;
+  box-sizing: border-box;
+  z-index: 1000;
+  border-top: 1px solid #282828;
+}
+
+/* --- 进度条美化 --- */
+.progress-bar-container {
+  position: absolute;
+  top: -4px; /* 调整位置，使其正好覆盖在顶部边框上 */
+  left: 0;
+  width: 100%;
+  height: 12px; /* 增加悬停和点击的热区 */
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  /* 添加一个透明的背景，优化悬停时的视觉效果 */
+  background-color: rgba(0, 0, 0, 0.1);
+  opacity: 0; /* 默认隐藏，悬停在整个播放器上时显示 */
+  transition: opacity 0.3s ease;
+}
+
+/* 当鼠标悬停在整个播放器上时，显示进度条 */
+.global-player-bar:hover .progress-bar-container {
+  opacity: 1;
+}
+
+.progress-bar-bg {
+  width: 100%;
+  height: 4px;
+  background-color: #535353; /* 使用稍亮一点的灰色 */
+  border-radius: 2px;
+  transition: height 0.2s ease;
+}
+
+.progress-bar-fg {
+  height: 4px;
+  background-color: #b3b3b3; /* 默认状态为灰色 */
+  border-radius: 2px;
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  transition: height 0.2s ease, background-color 0.2s ease;
+}
+
+/* 新增：进度条滑块 (Thumb) */
+.progress-bar-fg::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  top: 50%;
+  /* 关键：通过 transform 将滑块完美居中在进度条末端 */
+  transform: translate(50%, -50%);
+  width: 12px;
+  height: 12px;
+  background-color: white;
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+
+  /* 默认隐藏滑块，悬停时出现 */
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+/* 悬停在进度条容器上时的交互效果 */
+.progress-bar-container:hover .progress-bar-bg,
+.progress-bar-container:hover .progress-bar-fg {
+  height: 6px; /* 进度条变粗 */
+}
+.progress-bar-container:hover .progress-bar-fg {
+  background-color: #821db9; /* 进度条变为绿色 */
+}
+.progress-bar-container:hover .progress-bar-fg::after {
+  opacity: 1; /* 显示滑块 */
+}
+
+/* --- 左侧歌曲信息 (样式不变) --- */
+.player-track-details {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 180px;
+
+  min-width: 0; /* 非常重要！允许 flex item 收缩到比其内容更小 */
+  overflow: hidden; /* 确保整个 details 区域也不会溢出 */
+}
+.player-track-details a {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  color: inherit;
+}
+.player-album-art {
+  width: 50px;
+  height: 50px;
+  object-fit: cover;
+  margin-right: 15px;
+  border-radius: 4px;
+}
+.player-track-info {
+  flex-grow: 1;
+  min-width: 0;
+}
+.player-track-name {
+  font-size: 0.9rem;
+  margin: 0;
+  font-weight: 500;
+
+  white-space: nowrap; /* 1. 不换行 */
+  overflow: hidden; /* 2. 隐藏溢出部分 */
+  text-overflow: ellipsis; /* 3. 显示省略号 */
+}
+.player-artist-name {
+  font-size: 0.75rem;
+  color: #b3b3b3;
+  margin: 0;
+
+  white-space: nowrap; /* 1. 不换行 */
+  overflow: hidden; /* 2. 隐藏溢出部分 */
+  text-overflow: ellipsis; /* 3. 显示省略号 */
+}
+.player-track-duration {
+  font-size: 0.7rem;
+  color: #888;
+  margin-top: 2px;
+}
+
+/* --- 中间控制按钮 (样式不变) --- */
+.player-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  flex: 1;
+}
+.player-controls .player-button {
+  background: none;
+  border: none;
+  color: #b3b3b3;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 1.1rem;
+  transition: color 0.2s, transform 0.2s;
+}
+.player-controls .player-button:hover {
+  color: white;
+  transform: scale(1.1);
+}
+.player-controls .player-button.secondary {
+  font-size: 1.3rem;
+}
+.player-controls .play-pause-button {
+  background-color: white;
+  color: black;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  font-size: 1rem;
+}
+.player-controls .play-pause-button:hover {
+  transform: scale(1.05);
+  background-color: #a542cf;
+}
+
+/* --- 右侧额外控制 --- */
+.player-extra-controls {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex: 1;
+  min-width: 180px;
+  gap: 15px;
+}
+
+/* --- 音量控制区域美化 --- */
+.volume-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.volume-slider-container {
+  width: 80px;
+  height: 12px; /* 增加热区 */
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+.volume-slider-bg {
+  width: 100%;
+  height: 4px;
+  background-color: #535353;
+  border-radius: 2px;
+}
+.volume-slider-fg {
+  height: 4px;
+  background-color: #b3b3b3;
+  border-radius: 2px;
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  transition: background-color 0.2s ease;
+}
+
+/* 新增：音量条滑块 (始终显示) */
+.volume-slider-fg::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translate(50%, -50%);
+  width: 12px; /* 与进度条滑块保持一致 */
+  height: 12px;
+  background-color: white;
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+
+  /* 默认隐藏，悬停时才显示，保持界面整洁 */
+  opacity: 0;
+  transform: translate(50%, -50%) scale(0.8); /* 初始小一点 */
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+/* 悬停在音量容器上时，显示滑块并改变颜色 */
+.volume-controls:hover .volume-slider-fg {
+  background-color: #821db9; /* 悬停时变绿 */
+}
+.volume-controls:hover .volume-slider-fg::after {
+  opacity: 1; /* 显示滑块 */
+  transform: translate(50%, -50%) scale(1); /* 恢复正常大小 */
+}
+
+/* 更多操作菜单 (样式不变) */
+.player-menu-container {
+  position: relative;
+}
+.player-extra-controls .player-button {
+  background: none;
+  border: none;
+  color: #b3b3b3;
+  cursor: pointer;
+  font-size: 1.3rem;
+  padding: 8px;
+}
+.player-extra-controls .player-button:hover {
+  color: white;
+}

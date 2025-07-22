@@ -1,0 +1,166 @@
+/* 确保你的全局 CSS (如 index.css) 中定义了这些变量 */
+/*
+:root {
+  --primary-purple: #7f5af0;
+  --secondary-purple: #9d4edd;
+  --primary-text-color: #fffffe;
+  --background-overlay: rgba(0, 0, 0, 0.75);
+  --error-red: #e53e3e;
+  --success-green: #38a169;
+}
+*/
+
+/* 遮罩层样式 */
+.login-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: var(--background-overlay);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* 模态框内容区域样式 (登录和注册共用) */
+.login-modal-content {
+  background: #ffffff;
+  color: #333;
+  padding: 2.5rem 3rem;
+  border-radius: 16px;
+  box-shadow: 0 10px 35px rgba(0, 0, 0, 0.2);
+  width: 100%;
+  max-width: 420px;
+  position: relative;
+  animation: slideIn 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* 标题样式 */
+.login-modal-content h1 {
+  color: var(--primary-purple);
+  text-align: center;
+  margin: 0 0 1.5rem 0;
+  font-size: 2.2rem;
+  font-weight: 600;
+}
+
+/* 表单样式 */
+.login-modal-content form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}
+
+/* 输入框样式 */
+.login-modal-content input {
+  padding: 14px 16px;
+  border: 1px solid #dcdcdc;
+  border-radius: 8px;
+  font-size: 1rem;
+  background-color: #f9f9f9;
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+/* 输入框获取焦点时的样式 */
+.login-modal-content input:focus {
+  outline: none;
+  border-color: var(--primary-purple);
+  box-shadow: 0 0 0 3px rgba(127, 90, 240, 0.2);
+  background-color: #fff;
+}
+
+.form-button {
+  background-color: transparent;
+  border: 2px solid var(--primary-purple);
+  color: var(--primary-purple);
+  padding: 14px 20px;
+  margin-top: 0.5rem;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* 按钮悬停效果 */
+.form-button:hover {
+  background-color: var(--primary-purple);
+  color: var(--primary-text-color); /* 亮白色文字 */
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(127, 90, 240, 0.4);
+}
+
+/* 切换表单的容器和链接样式 */
+.switch-form-container {
+  text-align: center;
+  margin-top: 1.5rem;
+  color: #666;
+}
+
+.switch-form-link {
+  color: var(--primary-purple);
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  transition: color 0.3s;
+}
+
+.switch-form-link:hover {
+  color: var(--secondary-purple);
+  text-decoration: underline;
+}
+
+/* 错误和成功消息样式 */
+.error-message, .success-message {
+  text-align: center;
+  margin: -0.5rem 0 0.5rem 0;
+  padding: 0.5rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.error-message {
+  color: var(--error-red);
+  background-color: rgba(229, 62, 62, 0.1);
+}
+
+.success-message {
+  color: var(--success-green, #28a745);
+  background-color: rgba(56, 161, 105, 0.1);
+}
+
+/* 关闭按钮 '×' 样式 */
+.close-button {
+  position: absolute;
+  top: 15px;
+  right: 20px;
+  background: none;
+  border: none;
+  font-size: 2.2rem;
+  line-height: 1;
+  color: #ccc;
+  cursor: pointer;
+  transition: color 0.3s, transform 0.3s;
+}
+
+.close-button:hover {
+  color: #888;
+  transform: rotate(90deg);
+}
+
+/* 动画定义 (保持不变或微调) */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideIn {
+  from { transform: translateY(-30px) scale(0.98); opacity: 0; }
+  to { transform: translateY(0) scale(1); opacity: 1; }
+}

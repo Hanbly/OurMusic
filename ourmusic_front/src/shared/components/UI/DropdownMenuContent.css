@@ -1,0 +1,32 @@
+/* src/shared/components/UI/DropdownMenuContent.css */
+
+.dropdown-menu {
+  list-style: none;
+  padding: 8px 0;
+  margin: 0;
+  background-color: #282828; /* 深色背景 */
+  border-radius: 4px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  min-width: 180px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.dropdown-menu li {
+  padding: 10px 15px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.9rem;
+  color: #b3b3b3;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.dropdown-menu li:hover {
+  background-color: #3e3e3e; /* 悬停背景色 */
+  color: #ffffff; /* 悬停文字颜色 */
+}
+
+.dropdown-menu li svg {
+  font-size: 1.1rem;
+}

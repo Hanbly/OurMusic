@@ -1,0 +1,35 @@
+.music-shared-list {
+  --visible-items: 4; /* 可见4个 */
+  --item-height: 70px; /* 每个item的高度(在Item.css中定义) */
+  --list-gap: 12px;
+  
+  list-style: none;
+  padding: 0 8px 0 0; /* 右侧给滚动条留出空间 */
+  margin: 0;
+  height: 100%;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--list-gap);
+  
+  /* 关键：根据item数量和高度计算容器最大高度 */
+  max-height: calc(
+    (var(--visible-items) * var(--item-height)) + 
+    ((var(--visible-items) - 1) * var(--list-gap))
+  );
+}
+
+/* 美化滚动条 */
+.music-shared-list::-webkit-scrollbar {
+  width: 6px;
+}
+.music-shared-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+.music-shared-list::-webkit-scrollbar-thumb {
+  background: #444;
+  border-radius: 6px;
+}
+.music-shared-list::-webkit-scrollbar-thumb:hover {
+  background: #666;
+}

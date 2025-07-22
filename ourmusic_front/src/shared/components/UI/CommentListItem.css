@@ -1,0 +1,130 @@
+/* --- CommentItem Root --- */
+.comment-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px 0;
+  border-bottom: 1px solid #333;
+}
+
+.comment-list-root > .comment-item:last-child {
+  border-bottom: none;
+}
+
+/* --- Avatar --- */
+.comment-item__avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0; /* 防止头像在 flex 布局中被压缩 */
+}
+
+/* --- Content Block --- */
+.comment-item__content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* --- Header (Author + Timestamp) --- */
+.comment-item__header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.comment-item__author {
+  font-weight: 600;
+  color: #e0e0e0;
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+
+.comment-item__author:hover {
+  text-decoration: underline;
+}
+
+.comment-item__timestamp {
+  font-size: 0.75rem;
+  color: #888;
+}
+
+/* --- Comment Text --- */
+.comment-item__text {
+  margin: 0 0 8px 0;
+  color: #ccc;
+  line-height: 1.6;
+  white-space: pre-wrap; /* 保留换行和空格 */
+  word-break: break-word; /* 防止长单词溢出 */
+}
+
+/* --- Actions (Like, Dislike, Reply) --- */
+.comment-item__actions {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  font-size: 0.85rem;
+  color: #aaa;
+}
+
+.comment-item__actions .icon-button,
+.comment-item__actions .text-button {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  color: inherit;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: color 0.2s ease;
+}
+
+.comment-item__actions .icon-button:hover,
+.comment-item__actions .text-button:hover {
+  color: #fff;
+}
+
+.comment-item__actions .icon-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* 特定给已点赞/点踩的图标一个更醒目的颜色 */
+.comment-item__actions .icon-button > svg[data-liked="true"],
+.comment-item__actions .icon-button > svg[data-disliked="true"] {
+  color: #1db954; /* 示例高亮色 */
+}
+
+.comment-item__actions .count-display {
+  font-size: 0.8rem;
+  min-width: 10px; /* 给数字留出空间，防止按钮跳动 */
+}
+
+/* --- Reply Form --- */
+.reply-form {
+  margin-top: 12px;
+  padding-left: 0; /* 覆盖父级 .comment-form 的样式 */
+}
+
+/* --- Nested Replies List --- */
+.comment-replies-list {
+  list-style: none;
+  padding-left: 0;
+  margin-top: 16px;
+}
+
+/* 关键：为子评论添加缩进，宽度为 (头像宽度 + 间距) */
+.comment-replies-list > .comment-item {
+  padding-left: 52px;
+  border-top: 1px solid #333;
+  padding-top: 16px;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.comment-replies-list > .comment-item:first-child {
+  margin-top: 0;
+}

@@ -1,0 +1,7 @@
+.menu-background {
+  background: linear-gradient(to right, #1c1c1e, #2a2a2e);
+  min-height: 100vh;
+  padding: 2rem;
+
+  padding-bottom: var(--player-height-with-gap);
+}
