@@ -146,21 +146,9 @@
      Generated bash
 
      ```
-           git clone <repository_url>
+           git clone https://github.com/Hanbly/OurMusic.git
          
      ```
-
-     IGNORE_WHEN_COPYING_START
-
-      content_copy  download 
-
-      Use code [with caution](https://support.google.com/legal/answer/13505487). 
-
-     
-
-     Bash
-
-     IGNORE_WHEN_COPYING_END
 
   2. **配置数据库**:
 
@@ -186,19 +174,6 @@
            mvn spring-boot:run
          
      ```
-
-     IGNORE_WHEN_COPYING_START
-
-      content_copy  download 
-
-      Use code [with caution](https://support.google.com/legal/answer/13505487). 
-
-     
-
-     Bash
-
-     IGNORE_WHEN_COPYING_END
-
      - 服务默认将在 http://localhost:8080 启动。
 
   ### **前端部署 (ourmusic_front)**
@@ -212,18 +187,6 @@
          
      ```
 
-     IGNORE_WHEN_COPYING_START
-
-      content_copy  download 
-
-      Use code [with caution](https://support.google.com/legal/answer/13505487). 
-
-     
-
-     Bash
-
-     IGNORE_WHEN_COPYING_END
-
   2. **安装依赖**:
 
      Generated bash
@@ -232,18 +195,6 @@
            npm install
          
      ```
-
-     IGNORE_WHEN_COPYING_START
-
-      content_copy  download 
-
-      Use code [with caution](https://support.google.com/legal/answer/13505487). 
-
-     
-
-     Bash
-
-     IGNORE_WHEN_COPYING_END
 
   3. **配置API代理**:
 
@@ -258,17 +209,5 @@
            npm start
          
      ```
-
-     IGNORE_WHEN_COPYING_START
-
-      content_copy  download 
-
-      Use code [with caution](https://support.google.com/legal/answer/13505487). 
-
-     
-
-     Bash
-
-     IGNORE_WHEN_COPYING_END
 
      - 应用默认将在 http://localhost:3000 打开。
