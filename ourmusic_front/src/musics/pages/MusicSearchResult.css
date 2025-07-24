@@ -5,6 +5,7 @@
   --search-text-secondary: #b3b3b3;
   --search-highlight-bg: #3a3a3a;
   --search-rank-hot: #ff4500;
+  --search-accent-color: #8828d7; /* 补充一个 accent color 用于图标 */
   --search-transition: all 0.25s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
@@ -18,15 +19,13 @@
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
   border-radius: 0 0 12px 12px;
   z-index: 1000;
-  max-height: 50vh;
+  max-height: 70vh; /* 适当增加高度以容纳更多内容 */
   overflow-y: auto;
   color: var(--search-text-primary);
   padding: 8px 0;
   opacity: 0;
   transform: translateY(-10px);
   animation: fadeInDown 0.3s forwards;
-
-  padding-bottom: 30px;
 }
 
 @keyframes fadeInDown {
@@ -78,8 +77,19 @@
   color: var(--search-accent-color);
 }
 
+.result-section-title .fa-fire,
+.result-section-title .fa-music,
+.result-section-title .fa-list-alt,
+.result-section-title .fa-search {
+  color: var(--search-text-secondary); /* 统一图标颜色 */
+}
+
 .result-section-title .fa-fire {
-  color: var(--search-rank-hot);
+  color: var(--search-rank-hot); /* 热歌榜图标特殊颜色 */
+}
+
+.search-result-section {
+  padding-bottom: 8px; /* 统一 section 间距 */
 }
 
 .search-result-section + .search-result-section {
@@ -88,6 +98,7 @@
   padding-top: 8px;
 }
 
+/* --- 热歌榜样式 --- */
 .hot-song-item {
   display: flex;
   align-items: center;
@@ -136,6 +147,8 @@
   text-align: right;
 }
 
+
+/* --- 单曲/歌单搜索结果样式 --- */
 .search-result-item {
   display: flex;
   align-items: center;
@@ -162,7 +175,7 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
-  overflow: hidden; /* 防止内部文本溢出 */
+  overflow: hidden;
 }
 
 .item-primary-text {
@@ -182,6 +195,37 @@
   text-overflow: ellipsis;
 }
 
+
+/* --- 相关搜索样式 (新增并适配主题) --- */
+.related-search-section {
+  padding-bottom: 16px; /* 增加底部间距 */
+}
+
+.related-search-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 0 16px; /* 增加左右内边距 */
+}
+
+.related-search-item {
+  background-color: var(--search-highlight-bg);
+  padding: 6px 14px;
+  border-radius: 16px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s;
+  color: var(--search-text-secondary);
+  line-height: 1.4;
+}
+
+.related-search-item:hover {
+  background-color: var(--search-accent-color);
+  color: var(--search-text-primary);
+}
+
+
+/* --- 加载与空状态 --- */
 .search-result-loading,
 .search-result-empty {
   padding: 40px 20px;

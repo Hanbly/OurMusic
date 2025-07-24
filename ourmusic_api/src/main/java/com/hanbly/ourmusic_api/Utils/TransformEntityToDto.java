@@ -1,9 +1,6 @@
 package com.hanbly.ourmusic_api.Utils;
 
-import com.hanbly.ourmusic_api.pojo.Comment;
-import com.hanbly.ourmusic_api.pojo.CustomFile;
-import com.hanbly.ourmusic_api.pojo.Music;
-import com.hanbly.ourmusic_api.pojo.MusicCollection;
+import com.hanbly.ourmusic_api.pojo.*;
 import com.hanbly.ourmusic_api.pojo.RBAC.RBACdto.UserDto;
 import com.hanbly.ourmusic_api.pojo.RBAC.User;
 import com.hanbly.ourmusic_api.pojo.dto.*;
@@ -206,6 +203,20 @@ public class TransformEntityToDto {
             subCommentsDto.add(transformSubCommentEntityToDto(entity));
         }
         return subCommentsDto;
+    }
+
+    public static SearchMsgDto transformSearchEntityToDto(Search entity) {
+        SearchMsgDto searchMsgDto = new SearchMsgDto();
+        BeanUtils.copyProperties(entity, searchMsgDto);
+        return searchMsgDto;
+    }
+
+    public static List<SearchMsgDto> transformSearchEntityListToDtoList(List<Search> entityList) {
+        List<SearchMsgDto> searchMsgDtoList = new ArrayList<>();
+        for (Search entity : entityList) {
+            searchMsgDtoList.add(transformSearchEntityToDto(entity));
+        }
+        return searchMsgDtoList;
     }
 
 }

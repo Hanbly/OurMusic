@@ -26,6 +26,7 @@ const MainNavigation = (props) => {
     songs: [],
     collections: [],
   });
+  const [relatedSearches, setRelatedSearches] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const searchContainerRef = useRef(null);
 
@@ -83,6 +84,36 @@ const MainNavigation = (props) => {
   }, [searchTerm]);
 
   useEffect(() => {
+    const fetchRelatedSearches = async (term) => {
+      try {
+        const response = await axiosClient.get(`/api/search/by-a-root/${term}`);
+        
+        // --- 这是最终的、正确的修复 ---
+        // 遵循您项目中已有的API数据结构惯例，从 response.data.data 中获取数组
+        const payload = response.data && response.data.data;
+        const data = Array.isArray(payload) ? payload : [];
+        setRelatedSearches(data);
+
+      } catch (error) {
+        console.error("获取相关搜索失败:", error);
+        setRelatedSearches([]); 
+      }
+    };
+    
+    const timerId = setTimeout(() => {
+      if (searchTerm) {
+        fetchRelatedSearches(searchTerm);
+      } else {
+        setRelatedSearches([]);
+      }
+    }, 300);
+
+    return () => {
+      clearTimeout(timerId);
+    };
+  }, [searchTerm]);
+
+  useEffect(() => {
     const handleClickOutside = (event) => {
       if (
         searchContainerRef.current &&
@@ -132,8 +163,6 @@ const MainNavigation = (props) => {
     }
   };
 
-
-
   const id = auth.userId;
   const userName = auth.userName;
 
@@ -169,7 +198,7 @@ const MainNavigation = (props) => {
               <input
                 type="text"
                 className="search-form__input"
-                placeholder="搜索音乐、MV、歌单、用户"
+                placeholder="搜索音乐、歌单、艺术家、专辑"
                 onFocus={handleSearchFocus}
                 onChange={handleInputChange}
                 value={searchTerm}
@@ -188,8 +217,12 @@ const MainNavigation = (props) => {
               <MusicSearchResult
                 hotSongs={hotSongs}
                 searchResults={searchResults}
+                relatedSearches={relatedSearches}
                 searchTerm={searchTerm}
                 isLoading={isLoading}
+                setIsSearchFocused={setIsSearchFocused}
+                axiosClient={axiosClient}
+                auth={auth}
               />
             )}
           </div>

@@ -5,10 +5,9 @@ import com.hanbly.ourmusic_api.pojo.ResponseMessage;
 import com.hanbly.ourmusic_api.pojo.dto.SearchMsgDto;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/search")
@@ -22,6 +21,13 @@ public class SearchController {
     public ResponseMessage<String> addSearchMsg(@RequestBody SearchMsgDto searchMsgDto) {
         String result = searchService.addSearchMsg(searchMsgDto);
         return ResponseMessage.success(result, null);
+    }
+
+    @PreAuthorize("hasRole('admin') or hasRole('user')")
+    @GetMapping("/by-a-root/{root}")        // URL: localhost:8080/api/search/by-a-root/{root} method:GET
+    public ResponseMessage<List<String>> getSearchMsgByaRoot(@PathVariable String root) {
+        List<String> result = searchService.getSearchMsgByaRoot(root);
+        return ResponseMessage.success(result);
     }
 
 }

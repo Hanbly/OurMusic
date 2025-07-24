@@ -1,10 +1,27 @@
 import React from "react";
-import { Link } from "react-router-dom";
-import { FaMusic, FaListAlt, FaFire } from 'react-icons/fa';
+import { Link, useHistory } from "react-router-dom";
+import { FaMusic, FaListAlt, FaFire, FaSearch } from 'react-icons/fa';
 
 import "./MusicSearchResult.css";
 
-const MusicSearchResult = ({ hotSongs, searchResults, searchTerm, isLoading }) => {
+const MusicSearchResult = ({ hotSongs, searchResults, relatedSearches, searchTerm, isLoading, setIsSearchFocused, axiosClient, auth }) => {
+  
+  const history = useHistory();
+
+  const handleRelatedSearchClick = (term) => {
+    if (!term) return;
+    
+    history.push(`/s/${term}`);
+    setIsSearchFocused(false);
+
+    if (axiosClient && auth?.userId) {
+      axiosClient.post("/api/search", { 
+        searchContent: term,
+        searchType: "POSITIVE",
+        userId: auth.userId
+      });
+    }
+  };
 
   const renderHotList = () => {
     if (!hotSongs || hotSongs.length === 0) {
@@ -28,15 +45,36 @@ const MusicSearchResult = ({ hotSongs, searchResults, searchTerm, isLoading }) =
     );
   };
 
+  const renderRelatedSearches = () => {
+    if (!relatedSearches || relatedSearches.length === 0) {
+      return null;
+    }
+    return (
+      <div className="search-result-section related-search-section">
+        <div className="result-section-title"><FaSearch /> 相关搜索</div>
+        <div className="related-search-list">
+          {relatedSearches.slice(0, 10).map((term, index) => (
+            <div key={index} className="related-search-item" onClick={() => handleRelatedSearchClick(term)}>
+              {term}
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
   const renderSearchResults = () => {
     const { songs = [], collections = [] } = searchResults || {};
-    
-    if (songs.length === 0 && collections.length === 0) {
+    const hasNoDirectResults = songs.length === 0 && collections.length === 0;
+    const hasNoRelatedResults = !relatedSearches || relatedSearches.length === 0;
+
+    if (hasNoDirectResults && hasNoRelatedResults) {
       return <div className="search-result-empty">未能找到与“{searchTerm}”相关的内容</div>;
     }
 
     return (
       <div className="search-results">
+        {renderRelatedSearches()}
         {songs.length > 0 && (
           <div className="search-result-section">
             <div className="result-section-title"><FaMusic /> 单曲</div>

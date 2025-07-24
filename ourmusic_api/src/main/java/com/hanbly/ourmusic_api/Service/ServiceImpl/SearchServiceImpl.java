@@ -11,6 +11,11 @@ import jakarta.transaction.Transactional;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
+import static com.hanbly.ourmusic_api.Utils.SearchUtils.handleSearchRoot;
+import static com.hanbly.ourmusic_api.Utils.TransformEntityToDto.transformSearchEntityListToDtoList;
+
 @Service
 @Transactional
 public class SearchServiceImpl implements SearchService {
@@ -44,5 +49,16 @@ public class SearchServiceImpl implements SearchService {
         }
 
         return "添加搜索数据成功";
+    }
+
+    @Override
+    public List<String> getSearchMsgByaRoot(String root) {
+        if(root == null || root.isEmpty()){
+            throw new IllegalArgumentException("参数错误，请检查！");
+        }
+        List<SearchMsgDto> searchMsgDtoList = transformSearchEntityListToDtoList(searchDao.findAll());
+        List<String> results = handleSearchRoot(root, searchMsgDtoList);
+        results.subList(0, Math.min(results.size(), 10));
+        return results;
     }
 }
