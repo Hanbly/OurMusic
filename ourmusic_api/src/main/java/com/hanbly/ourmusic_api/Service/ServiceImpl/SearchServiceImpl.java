@@ -40,8 +40,11 @@ public class SearchServiceImpl implements SearchService {
             if(searchMsgDto.getSearchType().equals(Search.SearchType.POSITIVE) || searchMsgDto.getSearchType().equals(Search.SearchType.NEGATIVE)){
                 search.setSearchType(searchMsgDto.getSearchType());
             } else { throw new IllegalArgumentException("参数错误，请检查！"); }
-            search.setUser(user);
-            searchDao.save(search);
+            if(!searchDao.existsBySearchContentAndUser_UserIdAndSearchType(searchMsgDto.getSearchContent(), searchMsgDto.getUserId(), Search.SearchType.POSITIVE)){
+                search.setUser(user);
+                searchDao.save(search);
+            } else { return "同一用户的相同记录已存在"; }
+
         }catch(IllegalArgumentException e){
             throw e;
         }catch(Exception e){
@@ -57,8 +60,37 @@ public class SearchServiceImpl implements SearchService {
             throw new IllegalArgumentException("参数错误，请检查！");
         }
         List<SearchMsgDto> searchMsgDtoList = transformSearchEntityListToDtoList(searchDao.findAll());
-        List<String> results = handleSearchRoot(root, searchMsgDtoList);
-        results.subList(0, Math.min(results.size(), 10));
-        return results;
+        return handleSearchRoot(root, searchMsgDtoList)
+                .stream()
+                .distinct()
+                .limit(5)
+                .toList();
+    }
+
+    @Override
+    public List<String> getSearchMsgHistoryByUserId(Integer userId) {
+        if(userId == null){
+            throw new IllegalArgumentException("参数错误，请检查！");
+        }
+        List<SearchMsgDto> searchMsgDtoList = transformSearchEntityListToDtoList(searchDao.findAllByUserIdAndTypePositive(userId));
+        return searchMsgDtoList
+                .stream()
+                .map(SearchMsgDto::getSearchContent)
+                .distinct()
+                .limit(5)
+                .toList();
+    }
+
+    @Override
+    public String negativeSearchMsgHistoryByUserId(Integer userId) {
+        if(userId == null){
+            throw new IllegalArgumentException("参数错误，请检查！");
+        }
+
+        List<Search> searchList = searchDao.findAllByUserIdAndTypePositive(userId);
+        searchList.forEach(search -> search.setSearchType(Search.SearchType.NEGATIVE));
+        searchDao.saveAll(searchList);
+
+        return "删除搜索历史成功";
     }
 }

@@ -1,3 +1,5 @@
+// MainNavigation.js
+
 import React, { useState, useContext, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { useHistory } from "react-router-dom";
@@ -27,11 +29,26 @@ const MainNavigation = (props) => {
     collections: [],
   });
   const [relatedSearches, setRelatedSearches] = useState([]);
+  const [searchHistory, setSearchHistory] = useState([]); // 新增 State
   const [isLoading, setIsLoading] = useState(false);
   const searchContainerRef = useRef(null);
 
   const toggleDrawer = () => {
     setDrawerIsOpen(!drawerIsOpen);
+  };
+
+  // 新增: 获取搜索历史的函数
+  const fetchSearchHistory = async () => {
+    if (!auth.userId || searchHistory.length > 0) return;
+    try {
+      const response = await axiosClient.get(`/api/search/${auth.userId}/s-history`);
+      const payload = response.data && response.data.data;
+      const data = Array.isArray(payload) ? payload : [];
+      setSearchHistory(data);
+    } catch (error) {
+      console.error("获取搜索历史失败:", error);
+      setSearchHistory([]);
+    }
   };
 
   const fetchHotSongs = async () => {
@@ -87,16 +104,12 @@ const MainNavigation = (props) => {
     const fetchRelatedSearches = async (term) => {
       try {
         const response = await axiosClient.get(`/api/search/by-a-root/${term}`);
-        
-        // --- 这是最终的、正确的修复 ---
-        // 遵循您项目中已有的API数据结构惯例，从 response.data.data 中获取数组
         const payload = response.data && response.data.data;
         const data = Array.isArray(payload) ? payload : [];
         setRelatedSearches(data);
-
       } catch (error) {
         console.error("获取相关搜索失败:", error);
-        setRelatedSearches([]); 
+        setRelatedSearches([]);
       }
     };
     
@@ -132,6 +145,7 @@ const MainNavigation = (props) => {
     setIsSearchFocused(true);
     if (!searchTerm) {
       fetchHotSongs();
+      fetchSearchHistory(); // 修改: 同时获取搜索历史
     }
   };
 
@@ -218,6 +232,7 @@ const MainNavigation = (props) => {
                 hotSongs={hotSongs}
                 searchResults={searchResults}
                 relatedSearches={relatedSearches}
+                searchHistory={searchHistory} // 修改: 传递 prop
                 searchTerm={searchTerm}
                 isLoading={isLoading}
                 setIsSearchFocused={setIsSearchFocused}

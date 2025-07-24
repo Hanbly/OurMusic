@@ -119,7 +119,7 @@ const MusicListItemHistoryLongVer = (props) => {
         <button
           onClick={handleDelete}
           className="icon-button delete-button"
-          title="Delete"
+          title="删除历史记录"
         >
           <FaTrash />
         </button>

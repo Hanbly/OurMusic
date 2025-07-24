@@ -201,11 +201,26 @@
   padding-bottom: 16px; /* 增加底部间距 */
 }
 
+.history-content-wrapper {
+  display: flex;
+  justify-content: space-between; /* 关键属性：将子元素推向两端 */
+  align-items: flex-start;      /* 顶部对齐，防止按钮垂直居中 */
+  gap: 16px;                      /* 在列表和按钮之间留出一些间距 */
+  padding: 0 16px;                /* 将内边距从子元素移到父元素上 */
+}
+
 .related-search-list {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
-  padding: 0 16px; /* 增加左右内边距 */
+  padding: 0; /* 移除原来的内边距，因为它现在由父容器处理 */
+  flex-grow: 1; /* 让列表占据所有可用的剩余空间 */
+}
+
+/* --- 修改原始的 .clear-history-button-container --- */
+.clear-history-button-container {
+  padding: 0; /* 移除原来的内边距 */
+  flex-shrink: 0; /* 防止按钮在空间不足时被压缩 */
 }
 
 .related-search-item {
@@ -232,4 +247,25 @@
   text-align: center;
   color: var(--search-text-secondary);
   font-size: 14px;
+}
+
+.search-result-section .icon-button {
+  background: none;
+  border: none;
+  color: #aaa;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 8px;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.search-result-section .icon-button:hover {
+  color: #fff;
+}
+
+.search-result-section .delete-button:hover {
+  color: #e53e3e;
 }

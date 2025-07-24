@@ -30,4 +30,17 @@ public class SearchController {
         return ResponseMessage.success(result);
     }
 
+    @PreAuthorize("hasRole('admin') or authentication.principal.getUserId() == #userId")
+    @GetMapping("/{userId}/s-history")        // URL: localhost:8080/api/search/{userId}/s-history method:GET
+    public ResponseMessage<List<String>> getSearchMsgHistoryByUserId(@PathVariable Integer userId) {
+        List<String> result = searchService.getSearchMsgHistoryByUserId(userId);
+        return ResponseMessage.success(result);
+    }
+
+    @PreAuthorize("hasRole('admin') or authentication.principal.getUserId() == #userId")
+    @PutMapping("/{userId}/d-history")        // URL: localhost:8080/api/search/{userId}/d-history method:PUT
+    public ResponseMessage<String> negativeSearchMsgHistoryByUserId(@PathVariable Integer userId) {
+        String result = searchService.negativeSearchMsgHistoryByUserId(userId);
+        return ResponseMessage.success(result, null);
+    }
 }

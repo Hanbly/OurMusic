@@ -10,4 +10,8 @@ public interface SearchService {
     String addSearchMsg(SearchMsgDto searchMsgDto);
 
     List<String> getSearchMsgByaRoot(String root);
+
+    List<String> getSearchMsgHistoryByUserId(Integer userId);
+
+    String negativeSearchMsgHistoryByUserId(Integer userId);
 }
