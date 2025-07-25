@@ -18,6 +18,9 @@ import jakarta.persistence.criteria.Predicate;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
@@ -180,37 +183,33 @@ public class MusicCollectionServiceImpl implements MusicCollectionService {
     }
 
     @Override
-    public List<MusicCollectionDto> getCollectionByUserId(Integer userId, String searchState) {
+    public Page<MusicCollectionDto> getCollectionByUserId(Integer userId, String searchState, Pageable pageable) {
         if(searchState == null || searchState.isEmpty() || userId == null){
             throw new IllegalArgumentException("请求参数错误，请检查！");
         }
         User user = userDao.findById(userId).orElseThrow(() -> new EntityNotFoundException("无法查询用户歌单"));
-        musicCollectionDao.findByUserOrderByCollectionIdAsc(user);
-        List<MusicCollection> musicCollections;
-        switch (searchState) {
-            case "private":
-                musicCollections = musicCollectionDao.findByUserOrderByCollectionIdAsc(user);
-                break;
-            case "public":
-                musicCollections = musicCollectionDao.findByUserAndCollectionStatusNot(user, MusicCollection.CollectionStatus.PRIVATE);
-                break;
-            default:
-                return null;
-        }
+        Page<MusicCollection> musicCollectionsPage = switch (searchState) {
+            case "private" ->
+                    musicCollectionDao.findByUser_UserIdAndCollectionNameIsNotOrderByCollectionIdAsc(userId, "历史记录", pageable);
+            case "public" ->
+                    musicCollectionDao.findByUser_UserIdAndCollectionStatusNot(userId, MusicCollection.CollectionStatus.PRIVATE, pageable);
+            default -> throw new IllegalArgumentException("不支持的查询状态: " + searchState);
+        };
 
-        return dealWithBatchDataStats.dealWithCollectionListToResultDto(musicCollections);
+        List<MusicCollection> collectionsOnThisPage = musicCollectionsPage.getContent();
+        List<MusicCollectionDto> collectionsDtoOnThisPage = dealWithBatchDataStats.dealWithCollectionListToResultDto(collectionsOnThisPage);
+        return new PageImpl<>(collectionsDtoOnThisPage, pageable, musicCollectionsPage.getTotalElements());
     }
 
     @Override
-    public List<MusicCollectionDto> getMarkedCollectionByUserId(Integer userId) {
+    public Page<MusicCollectionDto> getMarkedCollectionByUserId(Integer userId, Pageable pageable) {
         if(userId == null){
             throw new IllegalArgumentException("请求参数错误，请检查！");
         }
-        User user = userDao.findById(userId)
-                .orElseThrow(() -> new EntityNotFoundException("无法查询该用户"));
-        List<MusicCollection> collections = user.getMarkedCollections();
-
-        return dealWithBatchDataStats.dealWithCollectionListToResultDto(collections);
+        Page<MusicCollection> collectionsPage = musicCollectionDao.findMarkedCollectionsByUserId(userId, pageable);
+        List<MusicCollection> collectionsOnThisPage = collectionsPage.getContent();
+        List<MusicCollectionDto> collectionsDtoOnThisPage = dealWithBatchDataStats.dealWithCollectionListToResultDto(collectionsOnThisPage);
+        return new PageImpl<>(collectionsDtoOnThisPage, pageable, collectionsPage.getTotalElements());
     }
 
     private final Integer SIMPLE_SEARCH_COUNT = 4;

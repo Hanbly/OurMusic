@@ -4,6 +4,8 @@ import com.hanbly.ourmusic_api.pojo.MusicCollection;
 import com.hanbly.ourmusic_api.pojo.dto.MusicCollectionDtoDetail;
 import com.hanbly.ourmusic_api.pojo.dto.MusicCollectionDto;
 import com.hanbly.ourmusic_api.pojo.dto.MusicCollectionDtoHistory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 
@@ -36,9 +38,9 @@ public interface MusicCollectionService {
 
     List<MusicCollectionDto> getCollectionBySomething(Integer userId, String collectionName, String collectionGenre, String mode);
 
-    List<MusicCollectionDto> getCollectionByUserId(Integer userId, String searchState);
+    Page<MusicCollectionDto> getCollectionByUserId(Integer userId, String searchState, Pageable pageable);
 
-    List<MusicCollectionDto> getMarkedCollectionByUserId(Integer userId);
+    Page<MusicCollectionDto> getMarkedCollectionByUserId(Integer userId, Pageable pageable);
 
     MusicCollectionDtoHistory getHistoryCollectionByUserId(Integer userId);
 

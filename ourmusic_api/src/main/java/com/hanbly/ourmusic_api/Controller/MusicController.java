@@ -8,6 +8,10 @@ import com.hanbly.ourmusic_api.pojo.dto.MusicDtoDetail;
 import com.hanbly.ourmusic_api.pojo.dto.MusicDto;
 import com.hanbly.ourmusic_api.pojo.dto.MusicEditDto;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -49,8 +53,10 @@ public class MusicController {
 
     @PreAuthorize(value = "hasRole('user') or hasRole('admin')")
     @GetMapping("/batch-by-user")        // URL: localhost:8080/api/music/batch-by-user?userId=...  method: GET
-    public ResponseMessage<List<MusicDto>> getMusicByUser(@RequestParam Integer userId) {
-        List<MusicDto> musicList = musicService.findMusicByUserId(userId);
+    public ResponseMessage<Page<MusicDto>> getMusicByUser(
+            @RequestParam Integer userId,
+            @PageableDefault(size = 4, direction = Sort.Direction.DESC) Pageable pageable) {
+        Page<MusicDto> musicList = musicService.findMusicByUserId(userId, pageable);
         if(musicList == null || musicList.isEmpty()){
             return ResponseMessage.success("音乐列表为空", null);
         }

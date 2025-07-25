@@ -4,11 +4,9 @@
   height: 100%;
   overflow-y: auto;
   box-sizing: border-box;
-
   padding-bottom: var(--player-height-with-gap);
 }
 
-/* 自定义滚动条样式 */
 .music-normal-search-page::-webkit-scrollbar {
   width: 8px;
 }
@@ -23,15 +21,18 @@
   background: #666;
 }
 
+.search-header {
+  margin-bottom: 30px;
+}
+
 .search-header h1 {
   font-size: 2.5rem;
   font-weight: 800;
-  margin-bottom: 30px;
+  margin-bottom: 25px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   padding-bottom: 20px;
 }
 
-/* 加载、错误、空状态的通用样式 */
 .search-status-feedback {
   display: flex;
   flex-direction: column;
@@ -40,6 +41,7 @@
   height: 40vh;
   color: #8e8e93;
   font-size: 18px;
+  text-align: center;
 }
 
 .search-status-feedback.error {
@@ -57,15 +59,23 @@
   100% { transform: rotate(360deg); }
 }
 
-/* 搜索结果容器 */
 .search-results-container {
   display: flex;
   flex-direction: column;
-  gap: 40px; /* 板块之间的间距 */
+  gap: 40px;
 }
 
 .search-results-section {
   width: 100%;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 15px;
 }
 
 .section-title {
@@ -75,12 +85,11 @@
   font-size: 24px;
   font-weight: 700;
   color: #fff;
-  margin-bottom: 20px;
   padding-bottom: 10px;
   position: relative;
+  flex-shrink: 0;
 }
 
-/* 模仿 MusicInfo.css 中的标题高亮线 */
 .section-title::after {
   content: "";
   position: absolute;
@@ -92,68 +101,101 @@
   border-radius: 2px;
 }
 
-/* 音乐列表容器 (MusicListItemPublic 已有自己的样式，这里只是一个逻辑容器) */
+.section-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.filter-container {
+  position: relative;
+}
+
+.filter-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: rgba(30, 30, 30, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 14px;
+  color: #e0e0e0;
+  cursor: pointer;
+  transition: background-color 0.2s, border-color 0.2s;
+  white-space: nowrap;
+}
+
+.filter-button:hover, .filter-button.active {
+  background-color: rgba(114, 19, 204, 0.8);
+  border-color: #a972ff;
+}
+
+.filter-button:focus {
+  outline: none;
+  border-color: #a972ff;
+  box-shadow: 0 0 0 2px rgba(169, 114, 255, 0.3);
+}
+
+.filter-dropdown-list {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 5px;
+  background-color: #2c2c2e;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 6px;
+  padding: 5px;
+  list-style: none;
+  z-index: 10;
+  max-height: 200px;
+  overflow-y: auto;
+  min-width: 160px;
+}
+
+.filter-dropdown-list::-webkit-scrollbar {
+  width: 6px;
+}
+.filter-dropdown-list::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+}
+.filter-dropdown-list::-webkit-scrollbar-thumb {
+  background: #444;
+  border-radius: 3px;
+}
+
+.filter-dropdown-item {
+  padding: 8px 12px;
+  font-size: 14px;
+  color: #e0e0e0;
+  border-radius: 4px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.filter-dropdown-item:hover {
+  background-color: #a972ff;
+  color: #fff;
+}
+
+.filter-dropdown-item.selected {
+  background-color: rgba(169, 114, 255, 0.15);
+  font-weight: 500;
+  color: #c79bff;
+}
+
 .music-list-container {
   display: flex;
   flex-direction: column;
-  gap: 8px; /* 音乐项之间的细微间距 */
+  gap: 8px;
 }
 
-/* 歌单列表容器 */
 .collection-list-container {
   list-style: none;
   padding: 0;
   margin: 0;
   display: grid;
-  /* 响应式网格布局 */
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); 
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 24px;
-}
-
-.collection-list-item a {
-  display: flex;
-  flex-direction: column;
-  background-color: rgba(255, 255, 255, 0.05);
-  border-radius: 8px;
-  overflow: hidden;
-  text-decoration: none;
-  color: #fff;
-  transition: background-color 0.3s ease, transform 0.3s ease;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-}
-
-.collection-list-item a:hover {
-  background-color: rgba(255, 255, 255, 0.1);
-  transform: translateY(-5px);
-}
-
-.collection-item-cover {
-  width: 100%;
-  aspect-ratio: 1 / 1;
-  object-fit: cover;
-  border-bottom: 2px solid #a972ff;
-}
-
-.collection-item-info {
-  padding: 15px;
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-
-.collection-item-name {
-  font-weight: 600;
-  font-size: 16px;
-  /* 防止文本过长 */
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.collection-item-creator {
-  font-size: 13px;
-  color: #8e8e93;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }

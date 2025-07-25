@@ -2,6 +2,8 @@ package com.hanbly.ourmusic_api.Dao;
 
 import com.hanbly.ourmusic_api.pojo.DataStats.CollectStats;
 import com.hanbly.ourmusic_api.pojo.Music;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
@@ -13,7 +15,7 @@ import java.util.List;
 @Repository
 public interface MusicDao extends JpaRepository<Music, Integer>, JpaSpecificationExecutor<Music> {
 
-    List<Music> findAllByUser_UserId(Integer userId);
+    Page<Music> findAllByUser_UserId(Integer userId, Pageable pageable);
 
     List<Music> findAllByMusicGenreOrMusicNameOrMusicArtistOrMusicAlbumOrMusicYear(String genre, String name, String artist, String album, String year);
 

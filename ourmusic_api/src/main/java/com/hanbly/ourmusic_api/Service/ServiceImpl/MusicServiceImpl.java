@@ -13,8 +13,13 @@ import com.hanbly.ourmusic_api.pojo.dto.*;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.transaction.Transactional;
+import me.xdrop.fuzzywuzzy.FuzzySearch;
+import me.xdrop.fuzzywuzzy.model.BoundExtractedResult;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
@@ -156,10 +161,12 @@ public class MusicServiceImpl implements MusicService {
     }
 
     @Override
-    public List<MusicDto> findMusicByUserId(Integer userId) {
-        List<Music> musics = musicDao.findAllByUser_UserId(userId);
+    public Page<MusicDto> findMusicByUserId(Integer userId, Pageable pageable) {
+        Page<Music> musicPage = musicDao.findAllByUser_UserId(userId, pageable);
 
-        return dealWithBatchDataStats.dealWithMusicListToResultDto(musics);
+        List<Music> musicsOnThisPage = musicPage.getContent();
+        List<MusicDto> musicDtosOnThisPage = dealWithBatchDataStats.dealWithMusicListToResultDto(musicsOnThisPage);
+        return new PageImpl<>(musicDtosOnThisPage, pageable, musicPage.getTotalElements());
     }
 
     private final Integer SIMPLE_SEARCH_COUNT = 4;
@@ -171,55 +178,61 @@ public class MusicServiceImpl implements MusicService {
     private final Double SHARE_COUNT_WEIGHT = 0.2;
     private final Double COMMENT_COUNT_WEIGHT = 0.2;
     private final Double DOWNLOAD_COUNT_WEIGHT = 0.1;
+
     @Override
     public List<MusicDto> findMusicBySomething(String genre, String musicName, String musicArtist, String musicAlbum, String musicYear, String mode) {
 
-        Specification<Music> spec = (root, query, cb) -> {
-            List<Predicate> predicates = new ArrayList<>();
+        List<Music> musics = musicDao.findAll();
+        int FILTER_CONFIDENCE_THRESHOLD = 50;
+        List<BoundExtractedResult<Music>> musicListFilterGenre;
+        List<BoundExtractedResult<Music>> musicListFilterName;
+        List<BoundExtractedResult<Music>> musicListFilterArtist;
+        List<BoundExtractedResult<Music>> musicListFilterAlbum;
+        List<BoundExtractedResult<Music>> musicListFilterYear;
 
-            // 对每个非空参数，添加一个 AND 条件
-            if (genre != null && !genre.trim().isEmpty()) {
-                // 使用 like 和 lower 实现不区分大小写的模糊匹配
-                predicates.add(cb.like(cb.lower(root.get("musicGenre")), "%" + genre.toLowerCase() + "%"));
-            }
-            if (musicName != null && !musicName.trim().isEmpty()) {
-                predicates.add(cb.like(cb.lower(root.get("musicName")), "%" + musicName.toLowerCase() + "%"));
-            }
-            if (musicArtist != null && !musicArtist.trim().isEmpty()) {
-                predicates.add(cb.like(cb.lower(root.get("musicArtist")), "%" + musicArtist.toLowerCase() + "%"));
-            }
-            if (musicAlbum != null && !musicAlbum.trim().isEmpty()) {
-                predicates.add(cb.like(cb.lower(root.get("musicAlbum")), "%" + musicAlbum.toLowerCase() + "%"));
-            }
-            if (musicYear != null && !musicYear.trim().isEmpty()) {
-                // 年份精确匹配
-                predicates.add(cb.equal(root.get("musicYear"), musicYear));
-            }
+        Map<Music, Integer> musicAndScores = new HashMap<>();
+        if(genre != null && !genre.isEmpty()) {
+            musicListFilterGenre = FuzzySearch.extractSorted(genre, musics, Music::getMusicGenre, FILTER_CONFIDENCE_THRESHOLD);
+            musicListFilterGenre.forEach(mfg -> {
+                musicAndScores.merge(mfg.getReferent(), mfg.getScore(), Integer::max);
+            });
+        }
+        if(musicName != null && !musicName.isEmpty()) {
+            musicListFilterName = FuzzySearch.extractSorted(musicName, musics, Music::getMusicName, FILTER_CONFIDENCE_THRESHOLD);
+            musicListFilterName.forEach(mfn -> {
+                musicAndScores.merge(mfn.getReferent(), mfn.getScore(), Integer::max);
+            });
+        }
+        if(musicArtist != null && !musicArtist.isEmpty()) {
+            musicListFilterArtist = FuzzySearch.extractSorted(musicArtist, musics, Music::getMusicArtist, FILTER_CONFIDENCE_THRESHOLD);
+            musicListFilterArtist.forEach(mfart -> {
+                musicAndScores.merge(mfart.getReferent(), mfart.getScore(), Integer::max);
+            });
+        }
+        if(musicAlbum != null && !musicAlbum.isEmpty()) {
+            musicListFilterAlbum = FuzzySearch.extractSorted(musicAlbum, musics, Music::getMusicAlbum, FILTER_CONFIDENCE_THRESHOLD);
+            musicListFilterAlbum.forEach(mfal -> {
+                musicAndScores.merge(mfal.getReferent(), mfal.getScore(), Integer::max);
+            });
+        }
+        if(musicYear != null && !musicYear.isEmpty()) {
+            musicListFilterYear = FuzzySearch.extractSorted(musicYear, musics, Music::getMusicYear, FILTER_CONFIDENCE_THRESHOLD);
+            musicListFilterYear.forEach(mfy -> {
+                musicAndScores.merge(mfy.getReferent(), mfy.getScore(), Integer::max);
+            });
+        }
 
-            // 将所有条件用 AND 连接起来
-            return cb.or(predicates.toArray(new Predicate[0]));
-        };
 
-        List<Music> musics = musicDao.findAll(spec);
+        List<Music> musicList = musicAndScores
+                .entrySet().stream()
+                .sorted(Map.Entry.<Music, Integer>comparingByValue().reversed())
+                .map(Map.Entry::getKey)
+                .toList();
 
         // 将结果转换为DTO，根据id配对统计数据
-        List<MusicDto> resultDto = dealWithBatchDataStats.dealWithMusicListToResultDto(musics);
-
-        resultDto.sort((r1, r2) -> {
-            double score1 = r1.getMusicLikedCount() * LIKE_COUNT_WEIGHT -
-                    r1.getMusicDislikedCount() * DISLIKE_COUNT_WEIGHT +
-                    r1.getMusicCollectedCount() * COLLECT_COUNT_WEIGHT +
-                    r1.getMusicSharedCount() * SHARE_COUNT_WEIGHT +
-                    r1.getMusicCommentedCount() * COMMENT_COUNT_WEIGHT +
-                    r1.getMusicDownloadCount() * DOWNLOAD_COUNT_WEIGHT;
-            double score2 = r2.getMusicLikedCount() * LIKE_COUNT_WEIGHT -
-                    r2.getMusicDislikedCount() * DISLIKE_COUNT_WEIGHT +
-                    r2.getMusicCollectedCount() * COLLECT_COUNT_WEIGHT +
-                    r2.getMusicSharedCount() * SHARE_COUNT_WEIGHT +
-                    r2.getMusicCommentedCount() * COMMENT_COUNT_WEIGHT +
-                    r2.getMusicDownloadCount() * DOWNLOAD_COUNT_WEIGHT;
-            return Double.compare(score2, score1);
-        });
+        List<MusicDto> resultDto = dealWithBatchDataStats.dealWithMusicListToResultDto(
+                musicList.stream().distinct().toList()
+        );
 
         if(mode != null && mode.equals("simple")){
             resultDto = resultDto.subList(0, Math.min(resultDto.size(), SIMPLE_SEARCH_COUNT));

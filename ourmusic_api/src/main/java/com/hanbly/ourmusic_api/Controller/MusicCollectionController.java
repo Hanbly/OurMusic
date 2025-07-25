@@ -7,6 +7,10 @@ import com.hanbly.ourmusic_api.pojo.dto.MusicCollectionDtoDetail;
 import com.hanbly.ourmusic_api.pojo.dto.MusicCollectionDto;
 import com.hanbly.ourmusic_api.pojo.dto.MusicCollectionDtoHistory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -49,27 +53,24 @@ public class MusicCollectionController {
 
     @PreAuthorize(value = "hasRole('user') or hasRole('admin')")
     @GetMapping("/batch-by-user")     // URL: localhost:8080/api/collection/batch-by-user?userId=...&searchState=...  method: GET
-    public ResponseMessage<List<MusicCollectionDto>> getCollectionByUser(
+    public ResponseMessage<Page<MusicCollectionDto>> getCollectionByUser(
             @RequestParam Integer userId,
-            @RequestParam String searchState) {
-        List<MusicCollectionDto> collectionList = musicCollectionService.getCollectionByUserId(userId, searchState);
+            @RequestParam String searchState,
+            @PageableDefault(size = 5, direction = Sort.Direction.DESC) Pageable pageable) {
+        Page<MusicCollectionDto> collectionList = musicCollectionService.getCollectionByUserId(userId, searchState, pageable);
         if (collectionList == null || collectionList.isEmpty()) {
             return ResponseMessage.success("歌单列表为空", null);
         }
-        if(searchState.equals("private")){
-            // 私有模式查看，把历史歌单去掉
-            collectionList.remove(0);
-        }
-//        collectionList.forEach(collection -> {collection.getUser().setPassword(null);});
 
         return ResponseMessage.success(collectionList);
     }
 
     @PreAuthorize(value = "hasRole('admin') or authentication.principal.getUserId() == #userId")
     @GetMapping("/batch-by-user/marks")     // URL: localhost:8080/api/collection/batch-by-user/marks?userId=...  method: GET
-    public ResponseMessage<List<MusicCollectionDto>> getMarkedCollectionByUser(
-            @RequestParam Integer userId) {
-        List<MusicCollectionDto> collectionList = musicCollectionService.getMarkedCollectionByUserId(userId);
+    public ResponseMessage<Page<MusicCollectionDto>> getMarkedCollectionByUser(
+            @RequestParam Integer userId,
+            @PageableDefault(size = 5, direction = Sort.Direction.DESC) Pageable pageable) {
+        Page<MusicCollectionDto> collectionList = musicCollectionService.getMarkedCollectionByUserId(userId, pageable);
         if (collectionList == null || collectionList.isEmpty()) {
             return ResponseMessage.success("还没有收藏的歌单哦", null);
         }

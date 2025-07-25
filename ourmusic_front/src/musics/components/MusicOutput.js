@@ -11,121 +11,30 @@ import MusicRecommendList from "./MusicRecommendList";
 import MusicSharedList from "./MusicSharedList";
 import "./MusicOutput.css";
 
-// 数据获取函数，已移除 Collection 相关逻辑
-const fetchMusicData = async (musicKey, keyValue) => {
-  const API_BASE_URL = "/api/music/batch";
-  const params = new URLSearchParams();
-
-  switch (musicKey) {
-    case "Recommend":
-      if (keyValue) params.set("musicGenre", keyValue);
-      break;
-    case "Shared":
-      if (keyValue) params.set("userId", keyValue);
-      break;
-    default:
-      // 如果没有匹配的 key，则不添加参数
-      break;
-  }
-
-  let url = [];
-  if (musicKey === "Recommend") {
-    url = `${API_BASE_URL}?${params.toString()}&mode=recommend`;
-  } else if (musicKey === "Shared") {
-    url = `${API_BASE_URL}-by-user?${params.toString()}&mode=normal`;
-  }
-
-  if (musicKey === "Recommend") {
-    try {
-      const response = await fetch(url);
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      const result = await response.json();
-
-      if (result && result.code === 200 && Array.isArray(result.data)) {
-        console.log("Fetched music data:", result.data);
-        // 将后端返回的音乐数据格式映射到前端组件需要的数据格式
-        return result.data.map((music) => ({
-          id: music.musicId,
-          title: music.musicName,
-          cd: music.musicAlbum,
-          artist: music.musicArtist,
-          image: music.musicImageFileUrl,
-          sound: music.musicFileUrl,
-          like: music.musicLikedCount,
-          dislike: music.musicDislikedCount,
-          share: music.musicSharedCount,
-          comment: music.musicCommentedCount,
-          commentlist: [],
-          ...music,
-        }));
-      } else {
-        console.error("API response format is incorrect:", result);
-        return [];
-      }
-    } catch (error) {
-      console.error("Failed to fetch music data:", error);
-      return [];
-    }
-  } else if (musicKey === "Shared") {
-    try {
-      return await axiosClient.get(url).then((response) => {
-        if (
-          response.data &&
-          response.data.code === 200 &&
-          response.data.message === "success"
-        ) {
-          // 将后端返回的音乐数据格式映射到前端组件需要的数据格式
-          return response.data.data.map((music) => ({
-            musicId: music.musicId,
-            musicName: music.musicName,
-            musicArtist: music.musicArtist,
-            musicAlbum: music.musicAlbum,
-            musicImageFileUrl: music.musicImageFileUrl,
-            musicFileUrl: music.musicFileUrl,
-            musicLikedCount: music.musicLikedCount,
-            musicDislikedCount: music.musicDislikedCount,
-            musicSharedCount: music.musicSharedCount,
-            musicCommentedCount: music.musicCommentedCount,
-            commentlist: [],
-            ...music,
-          }));
-        } else if (response.data && response.data.code !== 200) {
-          return [];
-        }
-      });
-    } catch (error) {
-      console.error("获取分享信息失败:", error);
-      return [];
-    }
-  }
-};
-
-const MusicOutput = (props) => {
-  const { musicKey, keyValue, width="600px" } = props;
-  // 状态已重命名回 'musics'
-  const [musics, setMusics] = useState([]);
+const MusicOutput = ({
+  musics, // 从props接收音乐列表
+  isLoading, // 从props接收加载状态
+  error, // 从props接收错误信息
+  musicKey,
+  keyValue,
+  width = "600px",
+}) => {
   const [title, setTitle] = useState("加载中...");
-  const [loading, setLoading] = useState(true);
-
   const scrollContainerRef = useRef(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
 
   const auth = useContext(AuthContext);
-
-  let music;
   const { playTrack } = useAudio();
+
   const handlePlayAll = () => {
     if (filteredMusics && filteredMusics.length > 0) {
-      music = filteredMusics[0];
-      playTrack(music, filteredMusics);
+      const firstMusic = filteredMusics[0];
+      playTrack(firstMusic, filteredMusics);
     }
   };
 
-  // className 逻辑已移除 Collection
   let className = "music-output-section";
   switch (musicKey) {
     case "Recommend":
@@ -138,26 +47,15 @@ const MusicOutput = (props) => {
       break;
   }
 
-  // Effect to fetch data when key/value changes
+  // Effect to set title based on props
   useEffect(() => {
-    // 标题设置已移除 Collection
     if (musicKey === "Recommend") {
       setTitle(`${keyValue}`);
     } else if (musicKey === "Shared") {
       setTitle(`音乐分享`);
     }
-
-    const loadData = async () => {
-      setLoading(true);
-      const data = await fetchMusicData(musicKey, keyValue);
-      setMusics(data || []);
-      setLoading(false);
-    };
-
-    loadData();
   }, [musicKey, keyValue]);
 
-  // --- 滚动逻辑 ---
   const checkScrollability = () => {
     const container = scrollContainerRef.current;
     if (container) {
@@ -180,17 +78,16 @@ const MusicOutput = (props) => {
         window.removeEventListener("resize", checkScrollability);
       };
     }
-  }, [musics]); // 依赖于 'musics' 数组的变化
+  }, [musics]);
 
-  const filteredMusics = musics
-    ? musics.filter((item) => {
-        const term = searchTerm.toLowerCase();
-        const title = (item.musicName || "").toLowerCase();
-        const artist = (item.musicArtist || "").toLowerCase();
-        const album = (item.musicAlbum || "").toLowerCase();
-        return title.includes(term) || artist.includes(term) || album.includes(term);
-      })
-    : [];
+  const filteredMusics =
+    musics?.filter((item) => {
+      const term = searchTerm.toLowerCase();
+      const title = (item.musicName || "").toLowerCase();
+      const artist = (item.musicArtist || "").toLowerCase();
+      const album = (item.musicAlbum || "").toLowerCase();
+      return title.includes(term) || artist.includes(term) || album.includes(term);
+    }) || [];
 
   const handleScroll = (direction) => {
     const container = scrollContainerRef.current;
@@ -204,12 +101,20 @@ const MusicOutput = (props) => {
   };
 
   const renderMusicList = () => {
-    if (loading) {
+    if (isLoading) {
       return (
         <div className="center">
           <h2>加载中...</h2>
         </div>
       );
+    }
+
+    if (error && (!musics || musics.length === 0)) {
+        return (
+            <div className="center">
+                <h2>{error}</h2>
+            </div>
+        )
     }
 
     if (filteredMusics.length === 0) {
@@ -220,7 +125,6 @@ const MusicOutput = (props) => {
       );
     }
 
-    // renderMusicList 已移除 Collection case
     switch (musicKey) {
       case "Shared":
         return <MusicSharedList allmusic={filteredMusics} />;
@@ -236,17 +140,17 @@ const MusicOutput = (props) => {
   };
 
   const handleSearchGenre = () => {
-    axiosClient.post("/api/search", { 
+    axiosClient.post("/api/search", {
       searchContent: keyValue,
       searchType: "NEGATIVE",
-      userId: auth.userId
+      userId: auth.userId,
     });
-  }
+  };
 
   const showScrollControls = musicKey === "Recommend";
 
   return (
-    <div className={className} style={{width: width}}>
+    <div className={className} style={{ width: width }}>
       <div className="section-header">
         <h3 className="section-title">{title}</h3>
         {showScrollControls && (

@@ -7,46 +7,31 @@ import { AuthContext } from "../../context/auth-context";
 import MusicOutput from "../../musics/components/MusicOutput";
 import CollectionOutput from "../../collects/components/CollectionOutput";
 import EditModal from "../../shared/components/EditModal/EditModal";
+import Pagination from "../../shared/components/UI/Pagination"; // 引入分页组件
 import "./MyMusics.css";
 
-// --- 分页逻辑辅助函数 ---
+// --- 分页逻辑辅助函数 (仅用于Modal) ---
 const DOTS = "...";
 
 const getPaginationItems = (currentPage, totalPageCount, siblingCount = 1) => {
   const totalPageNumbers = siblingCount * 2 + 5;
-
-  /*
-      Case 1: 如果总页数小于我们想要展示的数字数量，
-      就不需要省略号，直接返回完整页码范围。
-    */
   if (totalPageCount <= totalPageNumbers) {
     return Array.from({ length: totalPageCount }, (_, i) => i + 1);
   }
-
   const leftSiblingIndex = Math.max(currentPage - siblingCount, 1);
   const rightSiblingIndex = Math.min(
     currentPage + siblingCount,
     totalPageCount
   );
-
   const shouldShowLeftDots = leftSiblingIndex > 2;
   const shouldShowRightDots = rightSiblingIndex < totalPageCount - 1;
-
   const firstPageIndex = 1;
   const lastPageIndex = totalPageCount;
-
-  /*
-      Case 2: 只显示右边的省略号
-    */
   if (!shouldShowLeftDots && shouldShowRightDots) {
     let leftItemCount = 3 + 2 * siblingCount;
     let leftRange = Array.from({ length: leftItemCount }, (_, i) => i + 1);
     return [...leftRange, DOTS, totalPageCount];
   }
-
-  /*
-      Case 3: 只显示左边的省略号
-    */
   if (shouldShowLeftDots && !shouldShowRightDots) {
     let rightItemCount = 3 + 2 * siblingCount;
     let rightRange = Array.from(
@@ -55,10 +40,6 @@ const getPaginationItems = (currentPage, totalPageCount, siblingCount = 1) => {
     );
     return [firstPageIndex, DOTS, ...rightRange];
   }
-
-  /*
-      Case 4: 两边都显示省略号
-    */
   if (shouldShowLeftDots && shouldShowRightDots) {
     let middleRange = [];
     for (let i = leftSiblingIndex; i <= rightSiblingIndex; i++) {
@@ -71,17 +52,14 @@ const getPaginationItems = (currentPage, totalPageCount, siblingCount = 1) => {
 const MyMusics = () => {
   const auth = useContext(AuthContext);
   const currentUserId = auth.userId;
-
   const { userId } = useParams();
-
   const isLoggedInUser = Number(userId) === currentUserId;
 
   const [user, setUser] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
-  // ↓↓↓ 修改点1：保持默认状态为 "Collection"
+  const [userFetchError, setUserFetchError] = useState(null);
   const [activeOutput, setActiveOutput] = useState("Collection");
 
+  // --- START: Modal state and functions (完全保留) ---
   const [isCreatingCollection, setIsCreatingCollection] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newCollectionName, setNewCollectionName] = useState("");
@@ -100,19 +78,159 @@ const MyMusics = () => {
   const musicFileInputRef = useRef(null);
   const musicImageInputRefs = useRef([]);
 
-  // State for unified image upload
   const [unifiedImageFile, setUnifiedImageFile] = useState(null);
   const [unifiedImagePreview, setUnifiedImagePreview] = useState(null);
   const unifiedImageInputRef = useRef(null);
 
-  // State to track last uploaded image for duplicate check
   const [lastImageDetails, setLastImageDetails] = useState(null);
 
-  // Pagination state
-  const [currentPage, setCurrentPage] = useState(1);
-  const ITEMS_PER_PAGE = 1;
+  const [currentPage, setCurrentPage] = useState(1); // 这是 Modal 内的分页状态
+  const ITEMS_PER_PAGE = 1; // 这也是 Modal 内的
+  // --- END: Modal state and functions (完全保留) ---
 
-  // --- 所有函数保持不变 ---
+  // --- START: 分页数据状态管理 ---
+  const [outputData, setOutputData] = useState({
+    Collection: {
+      content: [],
+      pageInfo: { number: 0, totalPages: 1, size: 5 },
+      isLoading: true,
+      error: null,
+    },
+    Marked: {
+      content: [],
+      pageInfo: { number: 0, totalPages: 1, size: 5 },
+      isLoading: true,
+      error: null,
+    },
+    Shared: {
+      content: [],
+      pageInfo: { number: 0, totalPages: 1, size: 4 },
+      isLoading: true,
+      error: null,
+    },
+  });
+  // --- END: 分页数据状态管理 ---
+
+  // --- START: 数据获取 Effects ---
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const response = await axiosClient.get(`/api/user/${userId}`);
+        setUser(response.data.data);
+        setUserFetchError(null);
+      } catch (err) {
+        setUserFetchError(
+          err.response?.data?.message || err.message || "获取用户信息失败"
+        );
+      }
+    };
+    if (userId) {
+      fetchUserData();
+    }
+  }, [userId]);
+
+  useEffect(() => {
+    if (!user) return; // 确保用户信息加载后再获取列表数据
+
+    const activeState = outputData[activeOutput];
+    const currentPageForAPI = activeState.pageInfo.number;
+    const pageSize = activeState.pageInfo.size;
+
+    let url = "";
+    const params = {
+      userId,
+      page: currentPageForAPI,
+      size: pageSize,
+      sort: "desc",
+    };
+
+    switch (activeOutput) {
+      case "Collection":
+        url = "/api/collection/batch-by-user";
+        params.searchState = isLoggedInUser ? "private" : "public";
+        break;
+      case "Marked":
+        url = "/api/collection/batch-by-user/marks";
+        break;
+      case "Shared":
+        url = "/api/music/batch-by-user";
+        break;
+      default:
+        return;
+    }
+
+    const fetchDataForActiveTab = async () => {
+      setOutputData((prev) => ({
+        ...prev,
+        [activeOutput]: { ...prev[activeOutput], isLoading: true, error: null },
+      }));
+
+      try {
+        const response = await axiosClient.get(url, { params });
+        const result = response.data;
+        
+        if (result.code === 200 && result.data) {
+          setOutputData((prev) => ({
+            ...prev,
+            [activeOutput]: {
+              content: result.data.content,
+              pageInfo: {
+                number: result.data.number,
+                totalPages: result.data.totalPages,
+                size: result.data.size,
+              },
+              isLoading: false,
+              error: null,
+            },
+          }));
+        } else {
+            // 后端返回成功但数据为空的情况
+            setOutputData((prev) => ({
+                ...prev,
+                [activeOutput]: {
+                  content: [],
+                  pageInfo: { ...prev[activeOutput].pageInfo, number: 0, totalPages: 1 },
+                  isLoading: false,
+                  error: result.message || "列表为空"
+                },
+              }));
+        }
+      } catch (err) {
+        setOutputData((prev) => ({
+          ...prev,
+          [activeOutput]: {
+            ...prev[activeOutput],
+            isLoading: false,
+            error: err.response?.data?.message || err.message || "加载数据失败",
+          },
+        }));
+      }
+    };
+
+    fetchDataForActiveTab();
+  }, [userId, user, activeOutput, outputData[activeOutput].pageInfo.number]);
+  // --- END: 数据获取 Effects ---
+
+  // --- START: 分页和Tab处理函数 ---
+  const handlePageChange = (newPage) => {
+    setOutputData((prev) => ({
+      ...prev,
+      [activeOutput]: {
+        ...prev[activeOutput],
+        pageInfo: {
+          ...prev[activeOutput].pageInfo,
+          number: newPage - 1, // API需要0-based
+        },
+      },
+    }));
+  };
+
+  const handleTabClick = (outputType) => {
+    setActiveOutput(outputType);
+  };
+  // --- END: 分页和Tab处理函数 ---
+
+  // --- START: Modal 相关函数 (完全保留) ---
   const resetCollectionForm = () => {
     setNewCollectionName("");
     setNewCollectionDesc("");
@@ -182,6 +300,14 @@ const MyMusics = () => {
       await axiosClient.post("/api/collection", collectionData);
       setShowCreateModal(false);
       alert("歌单创建成功！");
+      // 刷新列表
+      if(activeOutput === "Collection") {
+        handlePageChange(1);
+      } else {
+        setActiveOutput("Collection");
+        setOutputData(prev => ({...prev, Collection: {...prev.Collection, pageInfo: {...prev.Collection.pageInfo, number: 0}}}));
+      }
+
     } catch (err) {
       setCreateError(
         err.response?.data?.message || err.message || "创建歌单失败"
@@ -214,7 +340,6 @@ const MyMusics = () => {
       event.target.value = null;
       return;
     }
-
     if (
       lastImageDetails &&
       lastImageDetails.name === file.name &&
@@ -224,11 +349,10 @@ const MyMusics = () => {
         "您正尝试上传同一张图片。\n\n建议使用'统一封面'功能一次性应用到所有歌曲。\n\n要继续为当前歌曲单独设置吗？"
       );
       if (!proceed) {
-        event.target.value = null; // Reset input if user cancels
+        event.target.value = null;
         return;
       }
     }
-
     const reader = new FileReader();
     reader.onloadend = () => {
       setNewMusics((prev) => {
@@ -240,7 +364,7 @@ const MyMusics = () => {
         return updatedMusics;
       });
       setLastImageDetails({ name: file.name, size: file.size });
-      event.target.value = null; // BUG FIX: Reset input to allow re-uploading the same file
+      event.target.value = null;
     };
     reader.readAsDataURL(file);
   };
@@ -255,7 +379,7 @@ const MyMusics = () => {
       };
       reader.readAsDataURL(file);
     }
-    event.target.value = null; // BUG FIX: Reset input
+    event.target.value = null;
   };
 
   const applyUnifiedImageToAll = () => {
@@ -278,9 +402,7 @@ const MyMusics = () => {
       alert("请先选择一个统一封面。");
       return;
     }
-
-    const currentIndex = currentPage - 1; // 数组索引从0开始
-
+    const currentIndex = currentPage - 1;
     setNewMusics((prev) => {
       const updatedMusics = [...prev];
       if (updatedMusics[currentIndex]) {
@@ -289,17 +411,14 @@ const MyMusics = () => {
       }
       return updatedMusics;
     });
-
     alert(`封面已应用到当前第 ${currentPage} 首歌曲。`);
   };
 
   const handleMusicFileChange = async (event) => {
     const files = Array.from(event.target.files);
     if (files.length === 0) return;
-
     const initialLength = newMusics.length;
     setShareError("");
-
     const tempMusics = files.map((file) => ({
       id: `${file.name}-${file.lastModified}-${Math.random()}`,
       musicFile: file,
@@ -315,18 +434,13 @@ const MyMusics = () => {
     }));
     setNewMusics((prev) => [...prev, ...tempMusics]);
     setCurrentPage(initialLength + 1);
-
     const musicDataPromises = files.map(async (file) => {
       const formData = new FormData();
       formData.append("file", file);
       try {
-        const response = await axiosClient.post(
-          "/api/files/preview",
-          formData,
-          {
-            headers: { "Content-Type": "multipart/form-data" },
-          }
-        );
+        const response = await axiosClient.post("/api/files/preview", formData, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
         return {
           id: `${file.name}-${file.lastModified}-${Math.random()}`,
           ...response.data.data,
@@ -347,9 +461,7 @@ const MyMusics = () => {
         };
       }
     });
-
     const resolvedMusics = await Promise.all(musicDataPromises);
-
     setNewMusics((prev) => {
       const updatedList = [...prev];
       resolvedMusics.forEach((resolvedMusic, index) => {
@@ -386,7 +498,6 @@ const MyMusics = () => {
       setShareError("请至少选择一个音乐文件。");
       return;
     }
-
     for (const [index, music] of newMusics.entries()) {
       if (
         !music.musicName ||
@@ -403,10 +514,8 @@ const MyMusics = () => {
         return;
       }
     }
-
     setIsSharingMusic(true);
     setShareError("");
-
     try {
       const uploadPromises = newMusics.map(async (music) => {
         let musicImageFileId = null;
@@ -424,7 +533,6 @@ const MyMusics = () => {
             throw new Error(`歌曲 "${music.musicName}" 的封面上传失败`);
           }
         }
-
         const musicFormData = new FormData();
         musicFormData.append("file", music.musicFile);
         const musicUploadRes = await axiosClient.post(
@@ -440,7 +548,6 @@ const MyMusics = () => {
           fileUrl: musicFileUrl,
           musicDuring,
         } = musicUploadRes.data.data;
-
         return {
           musicName: music.musicName,
           musicArtist: music.musicArtist,
@@ -454,56 +561,47 @@ const MyMusics = () => {
           userId: userId,
         };
       });
-
       const batchData = await Promise.all(uploadPromises);
-
       await axiosClient.post("/api/music/batch", batchData);
-
       setShowShareModal(false);
       alert(`成功分享 ${batchData.length} 首音乐！`);
+      // 刷新列表
+      if (activeOutput === 'Shared') {
+        handlePageChange(1);
+      } else {
+        setActiveOutput('Shared');
+        setOutputData(prev => ({...prev, Shared: {...prev.Shared, pageInfo: {...prev.Shared.pageInfo, number: 0}}}));
+      }
+
     } catch (err) {
-      setShareError(
-        err.response?.data?.message || err.message || "分享音乐失败"
-      );
+      setShareError(err.response?.data?.message || err.message || "分享音乐失败");
     } finally {
       setIsSharingMusic(false);
     }
   };
+  // --- END: Modal 相关函数 (完全保留) ---
 
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const response = await axiosClient.get(`/api/user/${userId}`);
-        setUser(response.data.data);
-      } catch (err) {
-        setError(
-          err.response?.data?.message || err.message || "获取用户信息失败"
-        );
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    if (userId) {
-      fetchUser();
-    }
-  }, [userId]);
-
+  // --- START: Modal 分页计算 (完全保留) ---
   const indexOfLastItem = currentPage * ITEMS_PER_PAGE;
   const indexOfFirstItem = indexOfLastItem - ITEMS_PER_PAGE;
   const currentMusicItem = newMusics[indexOfFirstItem];
   const pageCount = Math.ceil(newMusics.length / ITEMS_PER_PAGE);
-
   const paginationItems = getPaginationItems(currentPage, pageCount);
+  // --- END: Modal 分页计算 (完全保留) ---
 
-  if (isLoading) {
+
+  if (!user && !userFetchError) {
     return <div className="my-musics-status">加载中...</div>;
   }
-  if (error) {
-    return <div className="my-musics-status error">错误: {error}</div>;
+  if (userFetchError) {
+    return <div className="my-musics-status error">错误: {userFetchError}</div>;
   }
   if (!user) {
     return <div className="my-musics-status">未找到用户信息。</div>;
   }
+
+  // 从统一状态中获取当前活动Tab的数据
+  const activeData = outputData[activeOutput];
 
   return (
     <>
@@ -511,18 +609,16 @@ const MyMusics = () => {
         <div className="profile-card">
           <img
             src={user.userAvatarFileUrl}
-            alt={`${user.userNickName ? user.userNickName : user.userName}的头像`}
+            alt={`${user.userNickName || user.userName}的头像`}
             className="profile-card__avatar"
           />
           <div className="profile-card__info">
-            <h2 className="profile-card__name">{user.userNickName ? user.userNickName : user.userName}</h2>
+            <h2 className="profile-card__name">{user.userNickName || user.userName}</h2>
             <p className="profile-card__description">
-              {user.userDescription
-                ? user.userDescription
-                : "这个人很懒，什么都没有写..."}
+              {user.userDescription || "这个人很懒，什么都没有写..."}
             </p>
           </div>
-          {isLoggedInUser ? (
+          {isLoggedInUser && (
             <Link
               to={`/${userId}/historyInfo`}
               className="profile-card__history-button"
@@ -530,7 +626,7 @@ const MyMusics = () => {
               <FaHistory />
               <span>历史记录</span>
             </Link>
-          ) : null}
+          )}
         </div>
 
         <div className="musics-output-container">
@@ -540,7 +636,7 @@ const MyMusics = () => {
                 className={`musics-output__button ${
                   activeOutput === "Collection" ? "active" : ""
                 }`}
-                onClick={() => setActiveOutput("Collection")}
+                onClick={() => handleTabClick("Collection")}
               >
                 创建的歌单
               </button>
@@ -549,7 +645,7 @@ const MyMusics = () => {
                   className={`musics-output__button ${
                     activeOutput === "Marked" ? "active" : ""
                   }`}
-                  onClick={() => setActiveOutput("Marked")}
+                  onClick={() => handleTabClick("Marked")}
                 >
                   收藏的歌单
                 </button>
@@ -558,12 +654,12 @@ const MyMusics = () => {
                 className={`musics-output__button ${
                   activeOutput === "Shared" ? "active" : ""
                 }`}
-                onClick={() => setActiveOutput("Shared")}
+                onClick={() => handleTabClick("Shared")}
               >
                 分享的音乐
               </button>
             </div>
-            {isLoggedInUser ? (
+            {isLoggedInUser && (
               <div className="action-buttons-group">
                 <button className="create-button" onClick={openCreateModal}>
                   <FaPlus />
@@ -574,39 +670,56 @@ const MyMusics = () => {
                   <span>分享音乐</span>
                 </button>
               </div>
-            ) : null}
+            )}
           </div>
 
           <div className="musics-output__content">
             {activeOutput === "Collection" && (
               <CollectionOutput
-                key={`collection-${userId}`} // 使用 key 确保 props 变化时组件重载
+                collections={activeData.content}
+                isLoading={activeData.isLoading}
+                error={activeData.error}
                 userId={userId}
                 userName={user.userName}
                 userNickName={user.userNickName}
                 searchState={isLoggedInUser ? "private" : "public"}
+                collectionKey="Collection"
                 width="770px"
               />
             )}
             {activeOutput === "Marked" && isLoggedInUser && (
               <CollectionOutput
-                key={`marked-${userId}`} // 使用不同的 key
-                collectionKey="Marked" // 传入一个特殊的 key 来标识数据源
+                collections={activeData.content}
+                isLoading={activeData.isLoading}
+                error={activeData.error}
                 userId={userId}
                 userName={user.userName}
                 userNickName={user.userNickName}
+                collectionKey="Marked"
                 width="770px"
               />
             )}
             {activeOutput === "Shared" && (
               <MusicOutput
-                key={`shared-${userId}`} // 使用 key
-                musicKey={activeOutput}
+                musics={activeData.content}
+                isLoading={activeData.isLoading}
+                error={activeData.error}
+                musicKey="Shared"
                 keyValue={userId}
                 width="850px"
               />
             )}
           </div>
+
+          {/* --- 全局分页控件 --- */}
+          {!activeData.isLoading && activeData.content && activeData.content.length > 0 && (
+            <Pagination
+              currentPage={activeData.pageInfo.number + 1} // UI显示1-based
+              totalPages={activeData.pageInfo.totalPages}
+              onPageChange={handlePageChange}
+            />
+          )}
+
         </div>
       </div>
 
@@ -771,9 +884,7 @@ const MyMusics = () => {
                 type="file"
                 accept="image/*"
                 style={{ display: "none" }}
-                ref={(el) =>
-                  (musicImageInputRefs.current[indexOfFirstItem] = el)
-                }
+                ref={(el) => (musicImageInputRefs.current[indexOfFirstItem] = el)}
                 onChange={(e) => handleMusicImageChange(e, indexOfFirstItem)}
               />
 
@@ -783,9 +894,7 @@ const MyMusics = () => {
                     <label>音乐封面 (可选)</label>
                     <div
                       className="image-upload-preview large"
-                      onClick={() =>
-                        musicImageInputRefs.current[indexOfFirstItem]?.click()
-                      }
+                      onClick={() => musicImageInputRefs.current[indexOfFirstItem]?.click()}
                     >
                       {currentMusicItem.imagePreview ? (
                         <img
@@ -934,7 +1043,7 @@ const MyMusics = () => {
               {paginationItems.map((item, index) => {
                 if (item === DOTS) {
                   return (
-                    <span key={index} className="pagination-dots">
+                    <span key={`${item}-${index}`} className="pagination-dots">
                       {DOTS}
                     </span>
                   );
