@@ -196,12 +196,17 @@
 }
 
 
-/* --- 相关搜索样式 (新增并适配主题) --- */
-.related-search-section {
-  padding-bottom: 16px; /* 增加底部间距 */
-}
+
 
 .history-content-wrapper {
+  display: flex;
+  justify-content: space-between; /* 关键属性：将子元素推向两端 */
+  align-items: flex-start;      /* 顶部对齐，防止按钮垂直居中 */
+  gap: 16px;                      /* 在列表和按钮之间留出一些间距 */
+  padding: 0 16px;                /* 将内边距从子元素移到父元素上 */
+}
+
+.related-content-wrapper {
   display: flex;
   justify-content: space-between; /* 关键属性：将子元素推向两端 */
   align-items: flex-start;      /* 顶部对齐，防止按钮垂直居中 */

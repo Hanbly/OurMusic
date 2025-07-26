@@ -220,7 +220,7 @@ public class MusicCollectionServiceImpl implements MusicCollectionService {
     private final Double SHARE_COUNT_WEIGHT = 0.2;
     private final Double COMMENT_COUNT_WEIGHT = 0.2;
     @Override
-    public List<MusicCollectionDto> getCollectionBySomething(Integer userId, String collectionName, String collectionGenre, String mode) {
+    public Page<MusicCollectionDto> getCollectionBySomething(Integer userId, String collectionName, String collectionGenre, String mode, Pageable pageable) {
         Specification<MusicCollection> specification = (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
 
@@ -266,7 +266,22 @@ public class MusicCollectionServiceImpl implements MusicCollectionService {
             resultDto = resultDto.subList(0, Math.min(resultDto.size(), RECOMMEND_SEARCH_COUNT));
         }
 
-        return resultDto;
+        int totalElements = resultDto.size();
+
+        int pageSize = pageable.getPageSize();
+        int currentPage = pageable.getPageNumber();
+
+        int startItem = currentPage * pageSize;
+        if (startItem > totalElements) {
+            // 如果请求的页码超出了实际范围，返回一个空的 Page 对象，但保留正确的总数信息
+            return new PageImpl<>(Collections.emptyList(), pageable, totalElements);
+        }
+
+        int endItem = Math.min(startItem + pageSize, totalElements);
+
+        List<MusicCollectionDto> pageContent = resultDto.subList(startItem, endItem);
+
+        return new PageImpl<>(pageContent, pageable, totalElements);
     }
 
     @Override

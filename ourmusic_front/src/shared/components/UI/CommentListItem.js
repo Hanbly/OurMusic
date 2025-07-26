@@ -59,8 +59,8 @@ const CommentListItem = ({ comment, onReplyAdded, rootCommentId }) => {
           setIsLiked(true);
           setLikeCount((p) => p + 1);
           if (isDisliked) {
+            handleDislikeClick();
             setIsDisliked(false);
-            setDislikeCount((p) => p - 1);
           }
         } else if (res.data.message === "取消点赞成功") {
           setIsLiked(false);
@@ -84,8 +84,8 @@ const CommentListItem = ({ comment, onReplyAdded, rootCommentId }) => {
           setIsDisliked(true);
           setDislikeCount((p) => p + 1);
           if (isLiked) {
+            handleLikeClick();
             setIsLiked(false);
-            setLikeCount((p) => p - 1);
           }
         } else if (res.data.message === "取消点踩成功") {
           setIsDisliked(false);

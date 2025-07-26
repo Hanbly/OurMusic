@@ -180,7 +180,7 @@ public class MusicServiceImpl implements MusicService {
     private final Double DOWNLOAD_COUNT_WEIGHT = 0.1;
 
     @Override
-    public List<MusicDto> findMusicBySomething(String genre, String musicName, String musicArtist, String musicAlbum, String musicYear, String mode) {
+    public Page<MusicDto> findMusicBySomething(String genre, String musicName, String musicArtist, String musicAlbum, String musicYear, String mode, Pageable pageable) {
 
         List<Music> musics = musicDao.findAll();
         int FILTER_CONFIDENCE_THRESHOLD = 50;
@@ -240,7 +240,34 @@ public class MusicServiceImpl implements MusicService {
             resultDto = resultDto.subList(0, Math.min(resultDto.size(), RECOMMEND_SEARCH_COUNT));
         }
 
-        return resultDto;
+        // 1. 获取总记录数
+        //    这里的总数是经过模糊匹配、排序和 mode 截断后的列表大小
+        int totalElements = resultDto.size();
+
+        // 2. 从 Pageable 对象中获取分页参数
+        int pageSize = pageable.getPageSize();
+        int currentPage = pageable.getPageNumber();
+
+        // 3. 计算当前页在 resultDto 列表中的起始索引
+        //    注意：startItem 不能超过列表总大小
+        int startItem = currentPage * pageSize;
+        if (startItem > totalElements) {
+            // 如果请求的页码超出了实际范围，返回一个空的 Page 对象，但保留正确的总数信息
+            return new PageImpl<>(Collections.emptyList(), pageable, totalElements);
+        }
+
+        // 4. 计算当前页的结束索引
+        int endItem = Math.min(startItem + pageSize, totalElements);
+
+        // 5. 从总列表(resultDto)中手动截取出当前页的数据
+        List<MusicDto> pageContent = resultDto.subList(startItem, endItem);
+
+        // 6. 使用 PageImpl 构建并返回 Page 对象
+        //    构造函数需要：
+        //    a. 当前页的数据列表 (pageContent)
+        //    b. 分页请求信息 (pageable)
+        //    c. 总记录数 (totalElements)
+        return new PageImpl<>(pageContent, pageable, totalElements);
     }
 
     @Override

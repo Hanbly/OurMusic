@@ -42,6 +42,7 @@
   align-items: center;
   justify-content: center;
   padding: 50px;
+  gap: 24px;
 }
 
 .music-info-panel .art-container {
@@ -119,7 +120,6 @@
 .music-info-panel .music-info__title {
   font-size: 2rem;
   font-weight: 700;
-  margin-top: 24px;
   margin-bottom: 8px;
   text-align: center;
 }
@@ -127,6 +127,45 @@
   font-size: 1rem;
   color: #c7c7cc;
   text-align: center;
+}
+
+.music-info-panel .music-info__actions {
+  display: flex;
+  align-items: center;
+  transition: opacity 0.2s ease-in-out;
+}
+
+/* --- 图标对齐问题修复 --- */
+.music-info__actions .icon-button {
+  border: none;
+  color: #a7a7a7;
+  font-size: 20px; /* SVG图标的尺寸 */
+  cursor: pointer;
+  padding: 8px;
+  text-decoration: none;
+
+  display: inline-flex; /* 使用 inline-flex 保证元素紧凑 */
+  align-items: center;   /* 垂直居中 */
+  justify-content: center; /* 水平居中 (可选, 但能让布局更规整) */
+  gap: 4px;
+  line-height: 1; /* 强制行高为1，避免基线问题 */
+
+  background-color: transparent;
+  padding: 8px 12px; /* ADDED: Internal padding */
+}
+
+.music-info__actions .count-display{
+  font-size: 0.875rem;
+  line-height: 1; /* 与父元素保持一致 */
+}
+
+.music-info__actions .count-display:hover{
+  color: #6c63ff;
+}
+
+.music-info__actions .icon-button:hover {
+  color: #6c63ff;
+  text-decoration: none;
 }
 
 /* ---- 右侧 (信息 & 评论) ---- */
@@ -406,6 +445,7 @@
   display: flex;
   align-items: center;
   cursor: pointer;
+  position: relative;
 }
 
 .progress-bar-bg, .volume-slider-bg {
@@ -413,7 +453,6 @@
   height: 4px;
   background-color: rgba(255, 255, 255, 0.2);
   border-radius: 2px;
-  position: relative;
 }
 
 .progress-bar-fg, .volume-slider-fg {
@@ -422,12 +461,13 @@
   border-radius: 2px;
   position: absolute;
   left: 0;
-  top: 0;
+  top: 50%; /* 新增：垂直居中 */
+  transform: translateY(-50%); /* 新增：精确垂直居中 */
 }
 
 .progress-bar-container:hover .progress-bar-fg,
 .volume-slider-container:hover .volume-slider-fg {
-  background-color: var(--primary-hover-color, #1ed760);
+  background-color: #c77dff; /* 建议使用您的主题悬停色 */
 }
 
 /* 主要控制按钮 */

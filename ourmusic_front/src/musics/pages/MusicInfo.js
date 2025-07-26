@@ -20,7 +20,7 @@ import { GrShareOption, GrInstallOption } from "react-icons/gr";
 import axiosClient from "../../api-config";
 import { useAudio } from "../../context/audio-context";
 import { AuthContext } from "../../context/auth-context";
-import MusicOutput from "../../musics/components/MusicOutput";
+import MusicOutputContainer from "../components/MusicOutputContainer";
 import DropdownMenuContent from "../../shared/components/UI/DropdownMenuContent";
 import CollectionModal from "../../shared/components/EditModal/CollectModal";
 import CommentListItem from "../../shared/components/UI/CommentListItem";
@@ -105,7 +105,7 @@ const MusicInfo = ({ musicData, onClose, onCommentAdded }) => {
     }
     // 如果我们在这个渲染周期中已经请求播放过这首歌，也直接返回。
     if (playRequestRef.current === musicData.musicId) {
-        return;
+      return;
     }
     playRequestRef.current = musicData.musicId;
     playTrack(musicData, [musicData], auth.userId);
@@ -440,6 +440,7 @@ const MusicInfo = ({ musicData, onClose, onCommentAdded }) => {
     : "未知";
   const triggerRect = triggerRef.current?.getBoundingClientRect();
 
+  // console.log("当前进度值:", progress, "当前时间:", currentTime, "总时长:", duration);
   return (
     <>
       {currentTrack && (
@@ -530,7 +531,28 @@ const MusicInfo = ({ musicData, onClose, onCommentAdded }) => {
                   ></div>
                 </div>
                 <span className="time-display">{formatTime(duration)}</span>
+                <div className="volume-controls">
+                  <button
+                    title="静音"
+                    className="player-button"
+                    onClick={toggleMute}
+                  >
+                    <VolumeIcon />
+                  </button>
+                  <div
+                    className="volume-slider-container"
+                    ref={volumeBarRef}
+                    onMouseDown={handleVolumeDrag}
+                  >
+                    <div className="volume-slider-bg"></div>
+                    <div
+                      className="volume-slider-fg"
+                      style={{ width: `${isMuted ? 0 : volume * 100}%` }}
+                    ></div>
+                  </div>
+                </div>
               </div>
+
               <div className="music-info-player__controls">
                 <button
                   title="快退15秒"
@@ -576,29 +598,6 @@ const MusicInfo = ({ musicData, onClose, onCommentAdded }) => {
                   >
                     <BsThreeDots />
                   </button>
-                </div>
-              </div>
-
-              <div className="music-info-player__extra-controls">
-                <div className="volume-controls">
-                  <button
-                    title="静音"
-                    className="player-button"
-                    onClick={toggleMute}
-                  >
-                    <VolumeIcon />
-                  </button>
-                  <div
-                    className="volume-slider-container"
-                    ref={volumeBarRef}
-                    onMouseDown={handleVolumeDrag}
-                  >
-                    <div className="volume-slider-bg"></div>
-                    <div
-                      className="volume-slider-fg"
-                      style={{ width: `${isMuted ? 0 : volume * 100}%` }}
-                    ></div>
-                  </div>
                 </div>
               </div>
             </div>
@@ -650,14 +649,18 @@ const MusicInfo = ({ musicData, onClose, onCommentAdded }) => {
                       >
                         <img
                           src={userDto.userAvatarFileUrl}
-                          alt={userDto.userNickName?userDto.userNickName:userDto.userName}
+                          alt={
+                            userDto.userNickName
+                              ? userDto.userNickName
+                              : userDto.userName
+                          }
                           className="user__avatar"
                         />
                       </Link>{" "}
                       分享的其它歌曲
                     </div>
                     <div>
-                      <MusicOutput
+                      <MusicOutputContainer
                         musicKey="Shared"
                         keyValue={userDto.userId}
                         width="830px"

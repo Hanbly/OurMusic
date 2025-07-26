@@ -41,7 +41,9 @@ const MainNavigation = (props) => {
   const fetchSearchHistory = async () => {
     if (!auth.userId || searchHistory.length > 0) return;
     try {
-      const response = await axiosClient.get(`/api/search/${auth.userId}/s-history`);
+      const response = await axiosClient.get(
+        `/api/search/${auth.userId}/s-history`
+      );
       const payload = response.data && response.data.data;
       const data = Array.isArray(payload) ? payload : [];
       setSearchHistory(data);
@@ -66,21 +68,60 @@ const MainNavigation = (props) => {
   const fetchSearchResults = async (term) => {
     if (!term) return;
     setIsLoading(true);
+    // 在 SearchBar.js 或您的父组件中
+
     try {
-      const [musicResponse, collectionResponse] = await Promise.all([
-        axiosClient.get(
-          `/api/music/batch?musicGenre=${term}&musicName=${term}&musicArtist=${term}&musicAlbum=${term}&musicYear=${term}&mode=simple`
-        ),
-        axiosClient.get(
-          `/api/collection/batch?&collectionName=${term}&collectionGenre=${term}&mode=simple`
-        ),
-      ]);
-      setSearchResults({
-        songs: musicResponse.data.data || [],
-        collections: collectionResponse.data.data || [],
+      // 准备请求
+      const musicRequest = axiosClient.get("/api/music/batch", {
+        params: {
+          musicGenre: term,
+          musicName: term,
+          musicArtist: term,
+          musicAlbum: term,
+          musicYear: term,
+          mode: "simple",
+          size: 5, // 建议为预览结果限制数量
+        },
       });
+
+      const collectionRequest = axiosClient.get("/api/collection/batch", {
+        params: {
+          collectionName: term,
+          collectionGenre: term,
+          mode: "simple",
+          size: 3, // 建议为预览结果限制数量
+        },
+      });
+
+      // 使用 Promise.allSettled 以增加容错性
+      const [musicResult, collectionResult] = await Promise.allSettled([
+        musicRequest,
+        collectionRequest,
+      ]);
+
+      // --- 核心修改点：分别解析每个请求的结果 ---
+
+      // 解析音乐结果
+      const songs =
+        musicResult.status === "fulfilled" &&
+        musicResult.value.data.code === 200 &&
+        musicResult.value.data.data
+          ? musicResult.value.data.data.content || [] // 从 Page 对象中提取 content
+          : [];
+
+      // 解析歌单结果
+      const collections =
+        collectionResult.status === "fulfilled" &&
+        collectionResult.value.data.code === 200 &&
+        collectionResult.value.data.data
+          ? collectionResult.value.data.data.content || [] // 从 Page 对象中提取 content
+          : [];
+
+      // 设置最终结果
+      setSearchResults({ songs, collections });
     } catch (error) {
-      console.error("搜索失败:", error);
+      // 这个 catch 主要捕获代码本身的错误，而不是API请求的失败
+      console.error("搜索逻辑处理失败:", error);
       setSearchResults({ songs: [], collections: [] });
     }
     setIsLoading(false);
@@ -112,7 +153,7 @@ const MainNavigation = (props) => {
         setRelatedSearches([]);
       }
     };
-    
+
     const timerId = setTimeout(() => {
       if (searchTerm) {
         fetchRelatedSearches(searchTerm);
@@ -156,10 +197,10 @@ const MainNavigation = (props) => {
   const clearSearch = () => {
     setSearchTerm("");
     if (searchContainerRef.current) {
-        const input = searchContainerRef.current.querySelector('input');
-        if (input) {
-            input.focus();
-        }
+      const input = searchContainerRef.current.querySelector("input");
+      if (input) {
+        input.focus();
+      }
     }
   };
 
@@ -169,10 +210,10 @@ const MainNavigation = (props) => {
       history.push(`/s/${encodeURIComponent(searchTerm.trim())}`);
       setIsSearchFocused(false);
 
-      axiosClient.post("/api/search", { 
+      axiosClient.post("/api/search", {
         searchContent: searchTerm.trim(),
         searchType: "POSITIVE",
-        userId: auth.userId
+        userId: auth.userId,
       });
     }
   };

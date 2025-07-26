@@ -117,3 +117,62 @@
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); 
   gap: 24px;
 }
+
+/* --- MusicGenreSearch.css 末尾追加 --- */
+
+/* Tab 切换容器 */
+.search-tabs {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  border-bottom: 1px solid var(--border-color, #3a3a3c);
+}
+
+/* Tab 按钮样式 */
+.search-tab-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: none;
+  border: none;
+  color: var(--secondary-text-color, #94a1b2);
+  font-size: 1.1rem;
+  font-weight: 600;
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  position: relative;
+  transition: color 0.3s ease;
+  margin-bottom: -1px; /* 让下划线与边框重合 */
+}
+
+.search-tab-button:hover {
+  color: var(--primary-text-color, #fffffe);
+}
+
+.search-tab-button.active {
+  color: var(--primary-purple, #7f5af0);
+}
+
+/* 激活状态的下划线动画 */
+.search-tab-button::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background-color: var(--primary-purple, #7f5af0);
+  transform: scaleX(0);
+  transition: transform 0.3s ease-in-out;
+}
+
+.search-tab-button.active::after {
+  transform: scaleX(1);
+}
+
+/* 移除原有分区的标题和外层容器，因为现在由Tab控制了 */
+.search-results-section {
+  /* 这个类可能不再需要，但如果子组件依赖它，可以保留 */
+  width: 100%;
+}

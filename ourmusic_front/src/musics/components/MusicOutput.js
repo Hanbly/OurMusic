@@ -1,39 +1,30 @@
-import React, { useState, useRef, useEffect, useContext } from "react";
+import React, { useRef, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { BsChevronLeft, BsChevronRight } from "react-icons/bs";
 import { FaPlay } from "react-icons/fa";
 
-import axiosClient from "../../api-config";
-import { useAudio } from "../../context/audio-context";
-import { AuthContext } from "../../context/auth-context";
-
+// 引入子组件
 import MusicRecommendList from "./MusicRecommendList";
 import MusicSharedList from "./MusicSharedList";
 import "./MusicOutput.css";
 
 const MusicOutput = ({
-  musics, // 从props接收音乐列表
-  isLoading, // 从props接收加载状态
-  error, // 从props接收错误信息
+  // 数据 Props
+  musics,
+  isLoading,
+  error,
+  // 行为和显示 Props
   musicKey,
   keyValue,
+  title, // 新增: 直接接收标题
+  onPlayAll, // 新增: 接收播放全部的处理函数
+  onSearchGenre, // 新增: 接收查看更多的处理函数
   width = "600px",
 }) => {
-  const [title, setTitle] = useState("加载中...");
   const scrollContainerRef = useRef(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-
-  const auth = useContext(AuthContext);
-  const { playTrack } = useAudio();
-
-  const handlePlayAll = () => {
-    if (filteredMusics && filteredMusics.length > 0) {
-      const firstMusic = filteredMusics[0];
-      playTrack(firstMusic, filteredMusics);
-    }
-  };
 
   let className = "music-output-section";
   switch (musicKey) {
@@ -46,15 +37,6 @@ const MusicOutput = ({
     default:
       break;
   }
-
-  // Effect to set title based on props
-  useEffect(() => {
-    if (musicKey === "Recommend") {
-      setTitle(`${keyValue}`);
-    } else if (musicKey === "Shared") {
-      setTitle(`音乐分享`);
-    }
-  }, [musicKey, keyValue]);
 
   const checkScrollability = () => {
     const container = scrollContainerRef.current;
@@ -72,9 +54,10 @@ const MusicOutput = ({
       setTimeout(checkScrollability, 100);
       container.addEventListener("scroll", checkScrollability);
       window.addEventListener("resize", checkScrollability);
-
       return () => {
-        container.removeEventListener("scroll", checkScrollability);
+        if(container) {
+            container.removeEventListener("scroll", checkScrollability);
+        }
         window.removeEventListener("resize", checkScrollability);
       };
     }
@@ -102,27 +85,13 @@ const MusicOutput = ({
 
   const renderMusicList = () => {
     if (isLoading) {
-      return (
-        <div className="center">
-          <h2>加载中...</h2>
-        </div>
-      );
+      return <div className="center"><h2>加载中...</h2></div>;
     }
-
-    if (error && (!musics || musics.length === 0)) {
-        return (
-            <div className="center">
-                <h2>{error}</h2>
-            </div>
-        )
+    if (error) {
+      return <div className="center"><h2 className="error-text">{error}</h2></div>;
     }
-
     if (filteredMusics.length === 0) {
-      return (
-        <div className="center">
-          <h2>{searchTerm ? "没有匹配结果" : "哎呀，这里什么都没有"}</h2>
-        </div>
-      );
+      return <div className="center"><h2>{searchTerm ? "没有匹配结果" : "哎呀，这里什么都没有"}</h2></div>;
     }
 
     switch (musicKey) {
@@ -139,57 +108,43 @@ const MusicOutput = ({
     }
   };
 
-  const handleSearchGenre = () => {
-    axiosClient.post("/api/search", {
-      searchContent: keyValue,
-      searchType: "NEGATIVE",
-      userId: auth.userId,
-    });
-  };
-
   const showScrollControls = musicKey === "Recommend";
 
   return (
     <div className={className} style={{ width: width }}>
       <div className="section-header">
-        <h3 className="section-title">{title}</h3>
+        {showScrollControls ? <h3 className="section-title">音乐推荐 · {title}</h3> : <h3 className="section-title">{title}</h3>}
         {showScrollControls && (
           <div className="scroll-controls">
             <ul className="more-links">
               <li>
+                {/* 使用传入的 onPlayAll */}
                 <button
                   className="action-button play-all"
-                  onClick={handlePlayAll}
+                  onClick={() => onPlayAll(filteredMusics)}
                 >
                   <FaPlay />
                   播放全部
                 </button>
               </li>
               <li>
+                {/* 使用传入的 onSearchGenre */}
                 <Link
                   className="more-link"
                   to={`/g/${keyValue}`}
                   title="查看更多"
-                  onClick={() => handleSearchGenre()}
+                  onClick={onSearchGenre}
                 >
                   More
                 </Link>
               </li>
               <li>
-                <button
-                  className="arrow left-arrow"
-                  onClick={() => handleScroll("left")}
-                  disabled={!canScrollLeft}
-                >
+                <button className="arrow left-arrow" onClick={() => handleScroll("left")} disabled={!canScrollLeft}>
                   <BsChevronLeft />
                 </button>
               </li>
               <li>
-                <button
-                  className="arrow right-arrow"
-                  onClick={() => handleScroll("right")}
-                  disabled={!canScrollRight}
-                >
+                <button className="arrow right-arrow" onClick={() => handleScroll("right")} disabled={!canScrollRight}>
                   <BsChevronRight />
                 </button>
               </li>

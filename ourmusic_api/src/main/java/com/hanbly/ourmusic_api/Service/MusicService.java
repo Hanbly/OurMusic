@@ -16,7 +16,7 @@ public interface MusicService {
 
     MusicDtoDetail getMusicByMusicId(Integer musicId);
 
-    List<MusicDto> findMusicBySomething(String genre, String musicName, String musicArtist, String musicAlbum, String musicYear, String mode);
+    Page<MusicDto> findMusicBySomething(String genre, String musicName, String musicArtist, String musicAlbum, String musicYear, String mode, Pageable pageable);
 
     List<MusicDto> findWeekHotMusicList();
 

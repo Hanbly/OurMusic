@@ -73,15 +73,16 @@ public class MusicController {
      * @return              筛选后的音乐信息
      */
     @GetMapping("/batch")     // URL: localhost:8080/api/music/batch?musicGenre=...&musicName=...&musicArtist=...&musicAlbum=...&musicYear=...&mode=...  method:GET
-    public ResponseMessage<List<MusicDto>> findMusicBySomething(
+    public ResponseMessage<Page<MusicDto>> findMusicBySomething(
             @RequestParam(required = false) String musicGenre,
             @RequestParam(required = false) String musicName,
             @RequestParam(required = false) String musicArtist,
             @RequestParam(required = false) String musicAlbum,
             @RequestParam(required = false) String musicYear,
-            @RequestParam(required = true) String mode) {
+            @RequestParam(required = true) String mode,
+            @PageableDefault(size = 20, direction = Sort.Direction.DESC) Pageable pageable) {
 
-        List<MusicDto> musicList = musicService.findMusicBySomething(musicGenre, musicName, musicArtist, musicAlbum, musicYear, mode);
+        Page<MusicDto> musicList = musicService.findMusicBySomething(musicGenre, musicName, musicArtist, musicAlbum, musicYear, mode, pageable);
         if(musicList == null || musicList.isEmpty()){
             return ResponseMessage.success("音乐列表为空", null);
         }

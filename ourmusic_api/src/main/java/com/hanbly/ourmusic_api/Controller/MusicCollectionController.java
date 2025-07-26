@@ -81,12 +81,13 @@ public class MusicCollectionController {
 
 //    @PreAuthorize(value = "hasRole('user') or hasRole('admin')")
     @GetMapping("/batch")     // URL: localhost:8080/api/collection/batch?userId=...&collectionName=...&collectionGenre=...&mode=...  method: GET
-    public ResponseMessage<List<MusicCollectionDto>> getCollectionBatch(
+    public ResponseMessage<Page<MusicCollectionDto>> getCollectionBatch(
             @RequestParam(required = false) Integer userId,
             @RequestParam(required = false) String collectionName,
             @RequestParam(required = false) String collectionGenre,
-            @RequestParam(required = true) String mode) {
-        List<MusicCollectionDto> collections = musicCollectionService.getCollectionBySomething(userId, collectionName, collectionGenre, mode);
+            @RequestParam(required = true) String mode,
+            @PageableDefault(size = 10, direction = Sort.Direction.DESC) Pageable pageable) {
+        Page<MusicCollectionDto> collections = musicCollectionService.getCollectionBySomething(userId, collectionName, collectionGenre, mode, pageable);
         if (collections == null || collections.isEmpty()) {
             return ResponseMessage.success("歌单列表为空", null);
         }

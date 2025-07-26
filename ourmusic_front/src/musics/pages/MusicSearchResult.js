@@ -138,16 +138,18 @@ const MusicSearchResult = ({
         <div className="result-section-title">
           <FaSearch /> 相关搜索
         </div>
-        <div className="related-search-list">
-          {relatedSearches.slice(0, 10).map((term, index) => (
-            <div
-              key={index}
-              className="related-search-item"
-              onClick={() => handleRelatedSearchClick(term)}
-            >
-              {term}
-            </div>
-          ))}
+        <div className="related-content-wrapper">
+          <div className="related-search-list">
+            {relatedSearches.slice(0, 10).map((term, index) => (
+              <div
+                key={index}
+                className="related-search-item"
+                onClick={() => handleRelatedSearchClick(term)}
+              >
+                {term}
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     );

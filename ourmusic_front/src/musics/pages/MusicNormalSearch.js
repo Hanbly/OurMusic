@@ -1,115 +1,58 @@
-import React, { useState, useEffect, useMemo, useRef } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useParams } from "react-router-dom";
 import axiosClient from "../../api-config";
-import { useAudio } from "../../context/audio-context";
 
+// 组件引入
 import MusicListItemPublicLongVer from "../../shared/components/UI/MusicListItemPublicLongVer";
 import CollectionListItemPublic from "../../shared/components/UI/CollectionListItemPublic";
-
+import Pagination from "../../shared/components/UI/Pagination";
 import { FaCompactDisc } from "react-icons/fa";
 import { IoMusicalNotes, IoAlbums } from "react-icons/io5";
-import { BsChevronRight, BsChevronDown } from "react-icons/bs";
 
 import "./MusicNormalSearch.css";
 
-const FilterDropdown = ({ label, name, options, activeValue, onFilterChange, openFilter, setOpenFilter }) => {
-  const ref = useRef(null);
-  const isOpen = openFilter === name;
-
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (ref.current && !ref.current.contains(event.target)) {
-        if (isOpen) {
-            setOpenFilter(null);
-        }
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [ref, setOpenFilter, isOpen]);
-
-  const handleSelect = (value) => {
-    onFilterChange(name, value);
-    setOpenFilter(null);
-  };
-
-  const selectedOptionLabel = options.find(opt => opt === activeValue) || label;
-
-  return (
-    <div className="filter-container" ref={ref}>
-      <button className={`filter-button ${isOpen ? 'active' : ''}`} onClick={() => setOpenFilter(isOpen ? null : name)}>
-        <span>{activeValue === 'all' ? label : selectedOptionLabel}</span>
-        {isOpen ? <BsChevronDown /> : <BsChevronRight />}
-      </button>
-      {isOpen && (
-        <ul className="filter-dropdown-list">
-          <li
-            className={`filter-dropdown-item ${activeValue === 'all' ? 'selected' : ''}`}
-            onClick={() => handleSelect('all')}
-          >
-            {label}
-          </li>
-          {options.map(option => (
-            <li
-              key={option}
-              className={`filter-dropdown-item ${activeValue === option ? 'selected' : ''}`}
-              onClick={() => handleSelect(option)}
-            >
-              {option}
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
-  );
-};
+// 注意：FilterDropdown 组件在这个版本中不再使用，可以安全地移除其定义和引入
 
 const MusicNormalSearch = () => {
   const { searchKey } = useParams();
 
-  const [musicResults, setMusicResults] = useState([]);
-  const [collectionResults, setCollectionResults] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  const [musicFilters, setMusicFilters] = useState({
-    artist: "all",
-    album: "all",
-    musicGenre: "all",
-    year: "all",
+  // --- State 管理：为音乐和歌单分别管理服务端分页状态 ---
+  const [musicData, setMusicData] = useState({
+    content: [],
+    pageInfo: { number: 0, totalPages: 1, size: 20 },
+    isLoading: true,
+    error: null,
   });
 
-  const [collectionFilters, setCollectionFilters] = useState({
-    collectionGenre: "all",
+  const [collectionData, setCollectionData] = useState({
+    content: [],
+    pageInfo: { number: 0, totalPages: 1, size: 12 },
+    isLoading: true,
+    error: null,
   });
-  
-  const [openFilter, setOpenFilter] = useState(null);
-
-  const { playTrack } = useAudio();
 
   useEffect(() => {
     if (!searchKey) {
-      setIsLoading(false);
+      setMusicData((prev) => ({ ...prev, isLoading: false }));
+      setCollectionData((prev) => ({ ...prev, isLoading: false }));
       return;
     }
 
     const fetchSearchResults = async () => {
-      setIsLoading(true);
-      setError(null);
-      setMusicFilters({ artist: "all", album: "all", musicGenre: "all", year: "all" });
-      setCollectionFilters({ collectionGenre: "all" });
-      setOpenFilter(null);
+      setMusicData((prev) => ({ ...prev, isLoading: true, error: null }));
+      setCollectionData((prev) => ({ ...prev, isLoading: true, error: null }));
 
       const musicRequest = axiosClient.get("/api/music/batch", {
         params: {
+          // 后端是 OR 搜索，所以每个字段都带上 searchKey
           musicGenre: searchKey,
           musicName: searchKey,
           musicArtist: searchKey,
           musicAlbum: searchKey,
           musicYear: searchKey,
           mode: "search",
+          page: musicData.pageInfo.number,
+          size: musicData.pageInfo.size,
         },
       });
 
@@ -118,74 +61,142 @@ const MusicNormalSearch = () => {
           collectionName: searchKey,
           collectionGenre: searchKey,
           mode: "search",
+          page: collectionData.pageInfo.number,
+          size: collectionData.pageInfo.size,
         },
       });
 
       try {
-        const [musicResponse, collectionResponse] = await Promise.all([
+        const [musicResponse, collectionResponse] = await Promise.allSettled([
           musicRequest,
           collectionRequest,
         ]);
-        setMusicResults(musicResponse.data?.data || []);
-        setCollectionResults(collectionResponse.data?.data || []);
+
+        // --- 修改点：更健壮地处理音乐请求的结果 ---
+        if (musicResponse.status === "fulfilled") {
+          const result = musicResponse.value.data;
+          // 检查 result.data 是否存在且是一个对象
+          if (
+            result &&
+            result.code === 200 &&
+            result.data &&
+            typeof result.data === "object"
+          ) {
+            const pageData = result.data;
+            setMusicData({
+              content: pageData.content || [], // 如果 content 为 null，则给一个空数组
+              pageInfo: {
+                number: pageData.number || 0,
+                totalPages: pageData.totalPages || 1,
+                size: pageData.size || 20,
+              },
+              isLoading: false,
+              error: null,
+            });
+          } else {
+            // 即使 code=200，但 data=null，也视为无结果
+            setMusicData((prev) => ({
+              ...prev,
+              content: [],
+              isLoading: false,
+              error: null,
+              pageInfo: { ...prev.pageInfo, number: 0, totalPages: 1 },
+            }));
+          }
+        } else {
+          // status === 'rejected'
+          const errorMsg =
+            musicResponse.reason?.response?.data?.message ||
+            musicResponse.reason?.message ||
+            "获取音乐列表失败";
+          setMusicData((prev) => ({
+            ...prev,
+            content: [],
+            isLoading: false,
+            error: errorMsg,
+          }));
+        }
+
+        // --- 修改点：同样健壮地处理歌单请求的结果 ---
+        if (collectionResponse.status === "fulfilled") {
+          const result = collectionResponse.value.data;
+          if (
+            result &&
+            result.code === 200 &&
+            result.data &&
+            typeof result.data === "object"
+          ) {
+            const pageData = result.data;
+            setCollectionData({
+              content: pageData.content || [],
+              pageInfo: {
+                number: pageData.number || 0,
+                totalPages: pageData.totalPages || 1,
+                size: pageData.size || 12,
+              },
+              isLoading: false,
+              error: null,
+            });
+          } else {
+            setCollectionData((prev) => ({
+              ...prev,
+              content: [],
+              isLoading: false,
+              error: null,
+              pageInfo: { ...prev.pageInfo, number: 0, totalPages: 1 },
+            }));
+          }
+        } else {
+          // status === 'rejected'
+          const errorMsg =
+            collectionResponse.reason?.response?.data?.message ||
+            collectionResponse.reason?.message ||
+            "获取歌单列表失败";
+          setCollectionData((prev) => ({
+            ...prev,
+            content: [],
+            isLoading: false,
+            error: errorMsg,
+          }));
+        }
       } catch (err) {
-        setError("加载搜索结果失败，请检查网络连接或稍后再试。");
-      } finally {
-        setIsLoading(false);
+        // 这个 catch 块现在基本不会被触发，但保留作为最后防线
+        console.error("请求封装时发生严重错误:", err);
+        const genericError = "发生意外错误，请刷新页面";
+        setMusicData((prev) => ({
+          ...prev,
+          isLoading: false,
+          error: genericError,
+        }));
+        setCollectionData((prev) => ({
+          ...prev,
+          isLoading: false,
+          error: genericError,
+        }));
       }
     };
 
     fetchSearchResults();
-  }, [searchKey]);
+  }, [searchKey, musicData.pageInfo.number, collectionData.pageInfo.number]);
 
-  const handleMusicFilterChange = (name, value) => {
-    setMusicFilters(prevFilters => ({
-      ...prevFilters,
-      [name]: value,
+  // --- 分页事件处理 ---
+  const handleMusicPageChange = (newPage) => {
+    setMusicData((prev) => ({
+      ...prev,
+      pageInfo: { ...prev.pageInfo, number: newPage - 1 },
     }));
   };
 
-  const handleCollectionFilterChange = (name, value) => {
-    setCollectionFilters(prevFilters => ({
-        ...prevFilters,
-        [name]: value,
+  const handleCollectionPageChange = (newPage) => {
+    setCollectionData((prev) => ({
+      ...prev,
+      pageInfo: { ...prev.pageInfo, number: newPage - 1 },
     }));
   };
 
-  const filterOptions = useMemo(() => {
-    const artists = [...new Set(musicResults.map(m => m.musicArtist).filter(Boolean))].sort();
-    const albums = [...new Set(musicResults.map(m => m.musicAlbum).filter(Boolean))].sort();
-    const musicGenres = [...new Set(musicResults.map(m => m.musicGenre).filter(Boolean))].sort();
-    const collectionGenres = [...new Set(collectionResults.map(c => c.collectionGenre).filter(Boolean))].sort();
-    const years = [...new Set(musicResults.map(m => m.musicYear?.substring(0, 4)).filter(Boolean))].sort((a, b) => b - a);
-    return { artists, albums, musicGenres, collectionGenres, years };
-  }, [musicResults, collectionResults]);
-
-  const displayedMusic = useMemo(() => {
-    return musicResults.filter(music => {
-      const artistMatch = musicFilters.artist === 'all' || music.musicArtist === musicFilters.artist;
-      const albumMatch = musicFilters.album === 'all' || music.musicAlbum === musicFilters.album;
-      const genreMatch = musicFilters.musicGenre === 'all' || music.musicGenre === musicFilters.musicGenre;
-      const yearMatch = musicFilters.year === 'all' || music.musicYear?.startsWith(musicFilters.year);
-      return artistMatch && albumMatch && genreMatch && yearMatch;
-    });
-  }, [musicResults, musicFilters]);
-
-  const displayedCollections = useMemo(() => {
-    return collectionResults.filter(collection => {
-      const genreMatch = collectionFilters.collectionGenre === 'all' || collection.collectionGenre === collectionFilters.collectionGenre;
-      return genreMatch;
-    });
-  }, [collectionResults, collectionFilters]);
-
-  const handlePlayAll = (musics) => {
-    if (musics && musics.length > 0) {
-      playTrack(musics[0], musics);
-    }
-  };
-
+  // --- 渲染逻辑 ---
   const renderContent = () => {
-    if (isLoading) {
+    if (musicData.isLoading && collectionData.isLoading) {
       return (
         <div className="search-status-feedback">
           <FaCompactDisc className="spinner-icon" />
@@ -194,71 +205,91 @@ const MusicNormalSearch = () => {
       );
     }
 
-    if (error) {
-      return <div className="search-status-feedback error">{error}</div>;
-    }
-    
-    const hasOriginalResults = musicResults.length > 0 || collectionResults.length > 0;
-    if (!hasOriginalResults) {
-        return <div className="search-status-feedback">{`未能搜索到与 “${searchKey}” 相关的内容`}</div>;
-    }
-
-    const hasFilteredResults = displayedMusic.length > 0 || displayedCollections.length > 0;
-    if (!hasFilteredResults) {
-        return <div className="search-status-feedback">在当前筛选条件下，没有找到相关内容</div>;
+    // 如果两个列表都加载完成且都为空
+    if (
+      !musicData.isLoading &&
+      !collectionData.isLoading &&
+      musicData.content.length === 0 &&
+      collectionData.content.length === 0
+    ) {
+      return (
+        <div className="search-status-feedback">{`未能搜索到与 “${searchKey}” 相关的内容`}</div>
+      );
     }
 
     return (
       <div className="search-results-container">
-        {musicResults.length > 0 && displayedMusic.length > 0 && (
-          <section className="search-results-section">
-            <div className="section-header">
-                <h3 className="section-title"><IoMusicalNotes /> 单曲</h3>
-                <div className="section-filters">
-                    {filterOptions.artists.length > 1 && (
-                        <FilterDropdown label="所有艺术家" name="artist" options={filterOptions.artists} activeValue={musicFilters.artist} onFilterChange={handleMusicFilterChange} openFilter={openFilter} setOpenFilter={setOpenFilter} />
-                    )}
-                    {filterOptions.albums.length > 1 && (
-                        <FilterDropdown label="所有专辑" name="album" options={filterOptions.albums} activeValue={musicFilters.album} onFilterChange={handleMusicFilterChange} openFilter={openFilter} setOpenFilter={setOpenFilter} />
-                    )}
-                    {filterOptions.musicGenres.length > 1 && (
-                        <FilterDropdown label="所有风格" name="musicGenre" options={filterOptions.musicGenres} activeValue={musicFilters.musicGenre} onFilterChange={handleMusicFilterChange} openFilter={openFilter} setOpenFilter={setOpenFilter} />
-                    )}
-                    {filterOptions.years.length > 1 && (
-                        <FilterDropdown label="所有年份" name="year" options={filterOptions.years} activeValue={musicFilters.year} onFilterChange={handleMusicFilterChange} openFilter={openFilter} setOpenFilter={setOpenFilter} />
-                    )}
-                </div>
+        {/* 音乐部分 */}
+        <section className="search-results-section">
+          <div className="section-header">
+            <h3 className="section-title">
+              <IoMusicalNotes /> 单曲
+            </h3>
+            {/* 筛选器已被移除 */}
+          </div>
+          {musicData.isLoading ? (
+            <div className="search-status-feedback">加载中...</div>
+          ) : musicData.error ? (
+            <div className="search-status-feedback error">
+              {musicData.error}
             </div>
-            <div className="music-list-container">
-              {displayedMusic.map((music) => (
-                <MusicListItemPublicLongVer music={music} key={music.musicId} width="100%" />
-              ))}
-            </div>
-          </section>
-        )}
+          ) : musicData.content.length > 0 ? (
+            <>
+              <div className="music-list-container">
+                {musicData.content.map((music) => (
+                  <MusicListItemPublicLongVer
+                    music={music}
+                    key={music.musicId}
+                    width="100%"
+                  />
+                ))}
+              </div>
+              <Pagination
+                currentPage={musicData.pageInfo.number + 1}
+                totalPages={musicData.pageInfo.totalPages}
+                onPageChange={handleMusicPageChange}
+              />
+            </>
+          ) : (
+            <div className="search-status-feedback">无相关单曲</div>
+          )}
+        </section>
 
-        {collectionResults.length > 0 && displayedCollections.length > 0 && (
-          <section className="search-results-section">
-            <div className="section-header">
-                <h3 className="section-title"><IoAlbums /> 歌单</h3>
-                <div className="section-filters">
-                    {filterOptions.collectionGenres.length > 1 && (
-                        <FilterDropdown label="所有风格" name="collectionGenre" options={filterOptions.collectionGenres} activeValue={collectionFilters.collectionGenre} onFilterChange={handleCollectionFilterChange} openFilter={openFilter} setOpenFilter={setOpenFilter} />
-                    )}
-                </div>
+        {/* 歌单部分 */}
+        <section className="search-results-section">
+          <div className="section-header">
+            <h3 className="section-title">
+              <IoAlbums /> 歌单
+            </h3>
+            {/* 筛选器已被移除 */}
+          </div>
+          {collectionData.isLoading ? (
+            <div className="search-status-feedback">加载中...</div>
+          ) : collectionData.error ? (
+            <div className="search-status-feedback error">
+              {collectionData.error}
             </div>
-            <ul className="collection-list-container">
-              {displayedCollections.map((collection) => (
-                <CollectionListItemPublic
-                  key={collection.collectionId}
-                  collection={collection}
-                  onPlayAll={() => handlePlayAll(collection.musics)}
-                  width="700px"
-                />
-              ))}
-            </ul>
-          </section>
-        )}
+          ) : collectionData.content.length > 0 ? (
+            <>
+              <ul className="collection-list-container">
+                {collectionData.content.map((collection) => (
+                  <CollectionListItemPublic
+                    key={collection.collectionId}
+                    collection={collection}
+                    width="700px"
+                  />
+                ))}
+              </ul>
+              <Pagination
+                currentPage={collectionData.pageInfo.number + 1}
+                totalPages={collectionData.pageInfo.totalPages}
+                onPageChange={handleCollectionPageChange}
+              />
+            </>
+          ) : (
+            <div className="search-status-feedback">无相关歌单</div>
+          )}
+        </section>
       </div>
     );
   };
@@ -266,7 +297,7 @@ const MusicNormalSearch = () => {
   return (
     <div className="music-normal-search-page">
       <header className="search-header">
-        <h1>搜索到 "{searchKey}" ：</h1>
+        <h1>搜索结果: “{searchKey}”</h1>
       </header>
       {renderContent()}
     </div>

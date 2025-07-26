@@ -36,7 +36,7 @@ public interface MusicCollectionService {
 
     void deleteCollectionByCollectionIds(List<Integer> collectionIds);
 
-    List<MusicCollectionDto> getCollectionBySomething(Integer userId, String collectionName, String collectionGenre, String mode);
+    Page<MusicCollectionDto> getCollectionBySomething(Integer userId, String collectionName, String collectionGenre, String mode, Pageable pageable);
 
     Page<MusicCollectionDto> getCollectionByUserId(Integer userId, String searchState, Pageable pageable);
 
