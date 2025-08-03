@@ -106,9 +106,9 @@ public class UserServiceImpl implements UserService {
     @Override
     @Async
     public CompletableFuture<ResponseMessage<String>> sendEmail(String email) {
-        if(!userDao.existsByEmail(email)) {
-            return CompletableFuture.completedFuture(ResponseMessage.error("邮箱不存在"));
-        }
+//        if(!userDao.existsByEmail(email)) {
+//            return CompletableFuture.completedFuture(ResponseMessage.error("邮箱不存在"));
+//        }
         String validateCode = generateValidateCodeUtil.generateValidateCode(VALIDATE_CODE_LENGTH);
         String message = "您的注册验证码为：" + validateCode + " 请在 " + EMAIL_VALIDATE_EXPIRE/60/1000 + " 分钟内使用。";
 
@@ -281,6 +281,7 @@ public class UserServiceImpl implements UserService {
                     null,
                     "查看听歌历史",
                     "不公开",
+                    user.getUserId(),
                     new ArrayList<>()
             );
             musicCollectionServiceImpl.addCollection(history);
@@ -289,6 +290,7 @@ public class UserServiceImpl implements UserService {
                     null,
                     "收藏的歌曲默认都在这里",
                     "不公开",
+                    user.getUserId(),
                     new ArrayList<>()
             );
             musicCollectionServiceImpl.addCollection(defaultCollection);

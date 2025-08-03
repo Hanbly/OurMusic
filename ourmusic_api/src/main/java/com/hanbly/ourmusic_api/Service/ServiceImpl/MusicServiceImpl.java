@@ -183,7 +183,7 @@ public class MusicServiceImpl implements MusicService {
     public Page<MusicDto> findMusicBySomething(String genre, String musicName, String musicArtist, String musicAlbum, String musicYear, String mode, Pageable pageable) {
 
         List<Music> musics = musicDao.findAll();
-        int FILTER_CONFIDENCE_THRESHOLD = 50;
+        int FILTER_CONFIDENCE_THRESHOLD = 70;
         List<BoundExtractedResult<Music>> musicListFilterGenre;
         List<BoundExtractedResult<Music>> musicListFilterName;
         List<BoundExtractedResult<Music>> musicListFilterArtist;

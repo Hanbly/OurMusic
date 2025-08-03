@@ -10,13 +10,20 @@ const fetchUserCollections = async (userId) => {
   try {
     const response = await axiosClient.get(`/api/collection/batch-by-user`, { params: { userId, searchState: "private" } });
     const result = response.data;
-    if (result && result.code === 200 && Array.isArray(result.data)) {
-      return result.data.map((collection) => ({
+    
+    // --- 修复开始 ---
+    // API返回的是一个分页对象，实际的数组在 result.data.content 中
+    if (result && result.code === 200 && result.data && Array.isArray(result.data.content)) {
+      return result.data.content.map((collection) => ({
         id: collection.collectionId,
         name: collection.collectionName,
-        image: collection.collectionImageFileUrl,
+        // 处理封面URL可能为null的情况，避免图片加载失败
+        image: collection.collectionImageFileUrl || "", 
       }));
     }
+    // --- 修复结束 ---
+
+    console.warn("API did not return the expected collection data structure:", result);
     return [];
   } catch (error) {
     console.error("Failed to fetch collections:", error);
@@ -46,7 +53,10 @@ const CollectionSelector = ({ userId, onCollectionSelect, selectedCollectionId }
   };
   
   useEffect(() => {
-    loadCollections();
+    if (userId) {
+        loadCollections();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
 
   const resetForm = () => {
@@ -149,12 +159,12 @@ const CollectionSelector = ({ userId, onCollectionSelect, selectedCollectionId }
           
           <div className="form-group">
             <label htmlFor="name">歌单名称</label>
-            <input id="name" type="text" value={newCollectionName} onChange={(e) => setNewCollectionName(e.target.value)} />
+            <input id="name" type="text" value={newCollectionName} onChange={(e) => setNewCollectionName(e.target.value)} required />
           </div>
 
           <div className="form-group">
             <label htmlFor="genre">歌单风格</label>
-            <input id="genre" type="text" value={newCollectionGenre} onChange={(e) => setNewCollectionGenre(e.target.value)} />
+            <input id="genre" type="text" value={newCollectionGenre} onChange={(e) => setNewCollectionGenre(e.target.value)} required />
           </div>
 
           <div className="form-group">
@@ -189,7 +199,11 @@ const CollectionSelector = ({ userId, onCollectionSelect, selectedCollectionId }
               onClick={() => onCollectionSelect(collection.id)} 
               className={`collection-selector-item ${selectedCollectionId === collection.id ? "selected" : ""}`}
             >
-              <img src={collection.image} alt={collection.name} className="collection-selector-item__image" />
+              {collection.image ? (
+                <img src={collection.image} alt={collection.name} className="collection-selector-item__image" />
+              ) : (
+                <div className="collection-selector-item__image placeholder"></div>
+              )}
               <span className="collection-selector-item__name">{collection.name}</span>
             </li>
           ))

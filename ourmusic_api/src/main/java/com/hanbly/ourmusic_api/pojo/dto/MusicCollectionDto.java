@@ -43,11 +43,12 @@ public class MusicCollectionDto {
 
     public MusicCollectionDto(
             String collectionName, Integer collectionImageFileId, String collectionDescription,
-            String collectionStatus, List<MusicDto> musics) {
+            String collectionStatus, Integer userId, List<MusicDto> musics) {
         this.collectionName = collectionName;
         this.collectionImageFileId = collectionImageFileId;
         this.collectionDescription = collectionDescription;
         this.collectionStatus = collectionStatus;
+        this.userId = userId;
         this.musics = musics;
     }
 
