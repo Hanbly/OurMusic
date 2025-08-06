@@ -4,13 +4,17 @@ import { FaPlay, FaPause } from "react-icons/fa";
 
 import axiosClient from '../../api-config';
 import { useAudio } from '../../context/audio-context';
-
+import Pagination from '../../shared/components/UI/Pagination';
 import MusicListItemHistoryLongVer from '../../shared/components/UI/MusicListItemHistoryLongVer';
+
 import "./HistoryInfo.css";
 
 const HistoryInfo = () => {
-  const { userId } = useParams(); // 从URL中获取userId
+  const { userId } = useParams();
   const [collectionData, setCollectionData] = useState(null);
+  const [musics, setMusics] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -23,49 +27,62 @@ const HistoryInfo = () => {
   } = useAudio();
 
   const isCurrentCollectionPlaying =
-    collectionData &&
     playlist.length > 0 &&
-    collectionData.musics.length > 0 &&
-    playlist[0].musicId === collectionData.musics[0].musicId;
+    musics.length > 0 &&
+    playlist[0].musicId === musics[0].musicId;
 
   useEffect(() => {
-    const fetchCollectionDetails = async () => {
+    const fetchHistoryDetails = async () => {
       setIsLoading(true);
       setError(null);
       try {
-        const response = await axiosClient.get(`/api/collection/history/${userId}`)
+        const response = await axiosClient.get(`/api/collection/history/${userId}`, {
+          params: {
+            page: currentPage - 1,
+            size: 10
+          }
+        });
         const result = response.data;
         if (result && result.code === 200) {
           setCollectionData(result.data);
-        }
-        else {
+          setMusics(result.data.musics || []);
+          setTotalPages(result.data.totalPages || 1);
+        } else {
           throw new Error(result.message || '未能获取历史记录详情');
         }
       } catch (err) {
         setError(err.message);
+        setCollectionData(null);
+        setMusics([]);
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchCollectionDetails();
-  }, [userId]); // 当userId变化时，重新获取数据
+    if (userId) {
+      fetchHistoryDetails();
+    }
+  }, [userId, currentPage]);
 
+  const handlePageChange = (newPage) => {
+    setCurrentPage(newPage);
+  };
+  
   const handlePlayAll = () => {
     if (isCurrentCollectionPlaying) {
       togglePlayPause();
     } else {
-      if (collectionData && collectionData.musics.length > 0) {
-        playTrack(collectionData.musics[0], collectionData.musics);
+      if (musics.length > 0) {
+        playTrack(musics[0], musics);
       }
     }
   };
 
   const handlePlaySingle = (music) => {
-    playTrack(music, collectionData.musics);
+    playTrack(music, musics);
   };
 
-  if (isLoading) {
+  if (isLoading && !collectionData) {
     return <div className="page-status">正在加载历史记录...</div>;
   }
 
@@ -79,7 +96,6 @@ const HistoryInfo = () => {
 
   return (
     <div className="collection-info-page">
-      {/* 头部信息区域 */}
       <header className="collection-info-header">
         <div className="header__image-container" onClick={handlePlayAll}>
           <img src={collectionData.collectionImageFileUrl} alt={collectionData.collectionName} />
@@ -92,10 +108,10 @@ const HistoryInfo = () => {
           <p className="header__description">{collectionData.collectionDescription || '暂无描述'}</p>
           <div className="header__meta">
             <div className="header__user">
-              <img src={collectionData.user.userAvatarFileUrl} alt={collectionData.user.userNickName?collectionData.user.userNickName:collectionData.user.userName} className="user__avatar" />
-              <span>{collectionData.user.userNickName?collectionData.user.userNickName:collectionData.user.userName}</span>
+              <img src={collectionData.user.userAvatarFileUrl} alt={collectionData.user.userNickName ? collectionData.user.userNickName : collectionData.user.userName} className="user__avatar" />
+              {/* <span>{collectionData.user.userNickName ? collectionData.user.userNickName : collectionData.user.userName}</span> */}
             </div>
-            <span className="meta__song-count">{collectionData.collectionMusicsNumber} 首歌</span>
+            <span className="meta__song-count">{collectionData.collectionMusicsNumber} 首音乐</span>
           </div>
           <div className="header__actions">
             <button className="action-button play-all" onClick={handlePlayAll}>
@@ -105,21 +121,36 @@ const HistoryInfo = () => {
           </div>
         </div>
       </header>
-
-      {/* 歌曲列表区域 */}
+      
       <main className="music-list-container">
-        <ul>
-          {collectionData.musics && collectionData.musics.map(music => (
-            <MusicListItemHistoryLongVer
-              key={music.musicId}
-              music={music}
-              width="100%"
-              onPlay={() => handlePlaySingle(music)}
-              isPlaying={currentTrack?.musicId === music.musicId && isPlaying}
-            />
-          ))}
-        </ul>
+        {isLoading ? (
+          <div className="page-status">正在加载音乐...</div>
+        ) : (
+          <ul>
+            {musics.length > 0 ? (
+              musics.map(music => (
+                <MusicListItemHistoryLongVer
+                  key={music.musicId}
+                  music={music}
+                  width="100%"
+                  onPlay={() => handlePlaySingle(music)}
+                  isPlaying={currentTrack?.musicId === music.musicId && isPlaying}
+                />
+              ))
+            ) : (
+              <li className="no-music-message">当前页面没有历史记录。</li>
+            )}
+          </ul>
+        )}
       </main>
+
+      {!isLoading && musics.length > 0 && totalPages > 1 && (
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={handlePageChange}
+        />
+      )}
     </div>
   );
 };

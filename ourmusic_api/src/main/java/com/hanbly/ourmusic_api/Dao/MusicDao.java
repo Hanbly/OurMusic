@@ -33,10 +33,11 @@ public interface MusicDao extends JpaRepository<Music, Integer>, JpaSpecificatio
             "JOIN CollectStats cs ON m.musicId = cs.collectStatsOwnerId " +
             "WHERE cs.collectStatsToCollection.collectionId = :collectionId " +
             "AND cs.collectStatsOwnerType = :ownerType " +
-            "ORDER BY cs.collectStatsTimestamp DESC")
-    List<Music> findMusicByCollectionIdAndOwnerTypeSortedByTimestamp(
+            "ORDER BY cs.collectStatsTimestamp DESC ")
+    Page<Music> findMusicByCollectionIdAndOwnerTypeSortedByTimestamp(
             @Param("collectionId") Integer collectionId,
-            @Param("ownerType") CollectStats.OwnerType ownerType
+            @Param("ownerType") CollectStats.OwnerType ownerType,
+            Pageable pageable
     );
 
 }

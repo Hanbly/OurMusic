@@ -37,16 +37,16 @@ public class MusicCollectionController {
 
     @PreAuthorize(value = "hasRole('user') or hasRole('admin')")
     @GetMapping("/{collectionId}")     // URL: localhost:8080/api/collection/{collectionId}  method: GET
-    public ResponseMessage<MusicCollectionDtoDetail> getCollection(@PathVariable Integer collectionId) {
-        MusicCollectionDtoDetail musicCollectionDetailDto = musicCollectionService.getCollectionByCollectionId(collectionId);
+    public ResponseMessage<MusicCollectionDtoDetail> getCollection(@PathVariable Integer collectionId, @PageableDefault(size = 10) Pageable musicPageable) {
+        MusicCollectionDtoDetail musicCollectionDetailDto = musicCollectionService.getCollectionByCollectionId(collectionId, musicPageable);
         musicCollectionDetailDto.getUser().setPassword(null);
         return ResponseMessage.success(musicCollectionDetailDto);
     }
 
     @PreAuthorize(value = "hasRole('admin') or authentication.principal.getUserId() == #userId")
     @GetMapping("/history/{userId}")     // URL: localhost:8080/api/collection/history/{userId}  method: GET
-    public ResponseMessage<MusicCollectionDtoHistory> getHistoryCollection(@PathVariable Integer userId) {
-        MusicCollectionDtoHistory musicCollectionDtoHistory = musicCollectionService.getHistoryCollectionByUserId(userId);
+    public ResponseMessage<MusicCollectionDtoHistory> getHistoryCollection(@PathVariable Integer userId, @PageableDefault(size = 10) Pageable pageable) {
+        MusicCollectionDtoHistory musicCollectionDtoHistory = musicCollectionService.getHistoryCollectionByUserId(userId, pageable);
         musicCollectionDtoHistory.getUser().setPassword(null);
         return ResponseMessage.success(musicCollectionDtoHistory);
     }

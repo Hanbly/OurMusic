@@ -8,11 +8,16 @@ import { AuthContext } from '../../context/auth-context';
 
 import MusicListItemPublic from '../../shared/components/UI/MusicListItemPublic';
 import CommentListItem from '../../shared/components/UI/CommentListItem';
+import Pagination from '../../shared/components/UI/Pagination';
 import "./CollectionInfo.css";
 
 const CollectionInfo = () => {
   const { collectionId } = useParams();
   const [collectionData, setCollectionData] = useState(null);
+  const [musics, setMusics] = useState([]);
+  const [comments, setComments] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   
@@ -25,28 +30,35 @@ const CollectionInfo = () => {
     playlist
   } = useAudio();
 
-  const [comments, setComments] = useState([]);
   const [commentText, setCommentText] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [commentError, setCommentError] = useState("");
   const textareaRef = useRef(null);
 
   const isCurrentCollectionPlaying = 
-    collectionData && 
     playlist.length > 0 &&
-    collectionData.musics.length > 0 &&
-    playlist.some(track => collectionData.musics.some(m => m.musicId === track.musicId));
+    musics.length > 0 &&
+    playlist[0].musicId === musics[0].musicId;
 
   useEffect(() => {
     const fetchCollectionDetails = async () => {
       setIsLoading(true);
       setError(null);
       try {
-        const response = await axiosClient.get(`/api/collection/${collectionId}`);
+        const response = await axiosClient.get(`/api/collection/${collectionId}`, {
+          params: {
+            page: currentPage - 1,
+            size: 15 
+          }
+        });
         const result = response.data;
         if (result && result.code === 200) {
           setCollectionData(result.data);
-          setComments(result.data.commentDto || []);
+          setMusics(result.data.musics || []);
+          setTotalPages(result.data.totalPages || 1);
+          if (currentPage === 1) {
+            setComments(result.data.commentDto || []);
+          }
         } else {
           throw new Error(result.message || '未能获取歌单详情');
         }
@@ -58,20 +70,24 @@ const CollectionInfo = () => {
     };
 
     fetchCollectionDetails();
-  }, [collectionId]);
+  }, [collectionId, currentPage]);
+
+  const handlePageChange = (newPage) => {
+    setCurrentPage(newPage);
+  };
 
   const handlePlayAll = () => {
-    if (collectionData && collectionData.musics.length > 0) {
+    if (musics.length > 0) {
       if (isCurrentCollectionPlaying) {
         togglePlayPause();
       } else {
-        playTrack(collectionData.musics[0], collectionData.musics, auth.userId);
+        playTrack(musics[0], musics, auth.userId);
       }
     }
   };
   
   const handlePlaySingle = (music) => {
-    playTrack(music, collectionData.musics, auth.userId);
+    playTrack(music, musics, auth.userId);
   }
 
   const handlePostComment = async (e) => {
@@ -130,7 +146,7 @@ const CollectionInfo = () => {
     setComments((prevComments) => simplifiedAddReply(prevComments));
   };
   
-  if (isLoading) {
+  if (isLoading && !collectionData) {
     return <div className="page-status">正在加载歌单...</div>;
   }
 
@@ -160,7 +176,7 @@ const CollectionInfo = () => {
               <img src={collectionData.user.userAvatarFileUrl} alt={collectionData.user.userNickName ? collectionData.user.userNickName : collectionData.user.userName} className="user__avatar" />
               <span>{collectionData.user.userNickName ? collectionData.user.userNickName : collectionData.user.userName}</span>
             </Link>
-            <span className="meta__song-count">{collectionData.collectionMusicsNumber} 首歌</span>
+            <span className="meta__song-count">{collectionData.collectionMusicsNumber} 首音乐</span>
           </div>
           <div className="header__actions">
             <button className="action-button play-all" onClick={handlePlayAll}>
@@ -173,18 +189,35 @@ const CollectionInfo = () => {
 
       <div className="collection-content-body">
         <main className="music-list-container">
-          <ul>
-            {collectionData.musics && collectionData.musics.map((music, index) => (
-              <MusicListItemPublic 
-                key={music.musicId} 
-                music={music}
-                index={index + 1}
-                onPlay={() => handlePlaySingle(music)}
-                isPlaying={currentTrack?.musicId === music.musicId && isPlaying}
-                width="100%"
-              />
-            ))}
-          </ul>
+          {isLoading ? (
+            <div className="page-status">正在加载音乐...</div>
+          ) : (
+            <>
+              <ul>
+                {musics.length > 0 ? (
+                  musics.map((music, index) => (
+                    <MusicListItemPublic 
+                      key={music.musicId} 
+                      music={music}
+                      index={(currentPage - 1) * 15 + index + 1}
+                      onPlay={() => handlePlaySingle(music)}
+                      isPlaying={currentTrack?.musicId === music.musicId && isPlaying}
+                      width="100%"
+                    />
+                  ))
+                ) : (
+                  <li className="no-music-message">这个歌单还没有收藏音乐。</li>
+                )}
+              </ul>
+              {totalPages > 1 && (
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={handlePageChange}
+                />
+              )}
+            </>
+          )}
         </main>
 
         <aside className="collection-comments-section">

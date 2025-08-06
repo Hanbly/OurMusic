@@ -22,7 +22,7 @@ public interface MusicCollectionDao extends JpaRepository<MusicCollection, Integ
      * findByUserId -> WHERE userId = ?
      * OrderByCollectionIdAsc -> ORDER BY collectionId ASC
      */
-    Page<MusicCollection> findByUser_UserIdAndCollectionNameIsNotOrderByCollectionIdAsc(Integer userId, String collectionName,  Pageable pageable);
+    Page<MusicCollection> findByUser_UserIdAndCollectionNameIsNotOrderByCollectionIdAsc(Integer userId, String collectionName, Pageable pageable);
 
     Page<MusicCollection> findByUser_UserIdAndCollectionStatusNot(Integer userId, MusicCollection.CollectionStatus collectionStatus, Pageable pageable);
 

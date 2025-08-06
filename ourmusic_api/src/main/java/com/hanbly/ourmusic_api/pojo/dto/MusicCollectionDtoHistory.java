@@ -35,6 +35,11 @@ public class MusicCollectionDtoHistory {
 
     private List<MusicDtoHistory> musics;
 
+    private int totalPages;      // 总页数
+    private long totalElements;  // 总记录数
+    private int size;            // 每页大小
+    private int number;          // 当前页码 (0-based)
+
 
     public MusicCollectionDtoHistory() {
     }
@@ -159,5 +164,35 @@ public class MusicCollectionDtoHistory {
         this.collectionCommentedCount = collectionCommentedCount;
     }
 
+    public int getTotalPages() {
+        return totalPages;
+    }
 
+    public void setTotalPages(int totalPages) {
+        this.totalPages = totalPages;
+    }
+
+    public long getTotalElements() {
+        return totalElements;
+    }
+
+    public void setTotalElements(long totalElements) {
+        this.totalElements = totalElements;
+    }
+
+    public int getSize() {
+        return size;
+    }
+
+    public void setSize(int size) {
+        this.size = size;
+    }
+
+    public int getNumber() {
+        return number;
+    }
+
+    public void setNumber(int number) {
+        this.number = number;
+    }
 }

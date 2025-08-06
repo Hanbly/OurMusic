@@ -94,10 +94,12 @@ public class MusicCollectionServiceImpl implements MusicCollectionService {
     }
 
     @Override
-    public MusicCollectionDtoDetail getCollectionByCollectionId(Integer collectionId) {
+    public MusicCollectionDtoDetail getCollectionByCollectionId(Integer collectionId, Pageable musicPageable) {
         // 获取歌单实体，如果不存在则抛出异常
         MusicCollection collectionPojo = musicCollectionDao.findById(collectionId)
                 .orElseThrow(() -> new IllegalArgumentException("参数异常，歌单不存在"));
+        Page<Music> musicPage = musicDao.findMusicByCollectionIdAndOwnerTypeSortedByTimestamp(collectionPojo.getCollectionId(), CollectStats.OwnerType.MUSIC, musicPageable);
+        collectionPojo.setMusics(musicPage.getContent());
 
         List<CommentDto> finalCommentsDto = dealWithBatchDataStats.getCommentsForOwner(Comment.OwnerType.COLLECTION, collectionId);
 
@@ -125,17 +127,22 @@ public class MusicCollectionServiceImpl implements MusicCollectionService {
 
         resultDto.setMusics(dealWithBatchDataStats.dealWithMusicListToResultDto(collectionPojo.getMusics()));
 
+        //将分页信息从 musicPage 复制到 resultDto
+        resultDto.setTotalPages(musicPage.getTotalPages());
+        resultDto.setTotalElements(musicPage.getTotalElements());
+        resultDto.setSize(musicPage.getSize());
+        resultDto.setNumber(musicPage.getNumber());
+
         return resultDto;
     }
 
     @Override
-    public MusicCollectionDtoHistory getHistoryCollectionByUserId(Integer userId) {
+    public MusicCollectionDtoHistory getHistoryCollectionByUserId(Integer userId, Pageable pageable) {
         User user = userDao.findById(userId).orElseThrow(() -> new EntityNotFoundException("无法查询用户歌单"));
         MusicCollection collectionPojo = musicCollectionDao.findByUserAndCollectionName(user, "历史记录");
 
-        collectionPojo.setMusics(
-                musicDao.findMusicByCollectionIdAndOwnerTypeSortedByTimestamp(collectionPojo.getCollectionId(), CollectStats.OwnerType.MUSIC)
-        );
+        Page<Music> musicPage = musicDao.findMusicByCollectionIdAndOwnerTypeSortedByTimestamp(collectionPojo.getCollectionId(), CollectStats.OwnerType.MUSIC, pageable);
+        collectionPojo.setMusics(musicPage.getContent());
 
         MusicCollectionDto musicCollectionDto = transformCollectionEntityToDto(collectionPojo);
         MusicCollectionDtoHistory resultDto = new MusicCollectionDtoHistory();
@@ -178,6 +185,12 @@ public class MusicCollectionServiceImpl implements MusicCollectionService {
         resultDto.setCollectionCommentedCount(commentStatsDao.countAllByCommentStatsOwnerTypeAndCommentStatsOwnerId(CommentStats.OwnerType.COLLECTION, collectionId));
         // 统计歌单内音乐数量
         resultDto.setCollectionMusicsNumber(collectStatsDao.countAllByCollectStatsOwnerTypeAndCollectStatsToCollection_CollectionId(CollectStats.OwnerType.MUSIC, collectionId));
+
+        //将分页信息从 musicPage 复制到 resultDto
+        resultDto.setTotalPages(musicPage.getTotalPages());
+        resultDto.setTotalElements(musicPage.getTotalElements());
+        resultDto.setSize(musicPage.getSize());
+        resultDto.setNumber(musicPage.getNumber());
 
         return resultDto;
     }
