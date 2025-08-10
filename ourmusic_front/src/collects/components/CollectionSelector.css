@@ -1,4 +1,4 @@
-/* src/collects/components/CollectionSelector.css (新文件) */
+/* src/collects/components/CollectionSelector.css */
 
 /* 列表容器 */
 .collection-selector-list {
@@ -7,7 +7,6 @@
   margin: 0;
   max-height: 40vh; /* 限制最大高度，超出部分可滚动 */
   overflow-y: auto; /* 允许垂直滚动 */
-  /* 为滚动条美化（可选，但推荐） */
   scrollbar-width: thin;
   scrollbar-color: #ccc #f1f1f1;
 }
@@ -31,26 +30,47 @@
 
 /* 列表中的每一项 */
 .collection-selector-item {
+  position: relative; /* 为 ::after 伪元素定位 */
   display: flex;
   align-items: center;
   padding: 12px;
   border-radius: 8px;
-  border: 2px solid transparent; /* 预留边框位置，防止选中时跳动 */
+  border: 2px solid #e0e0e0; /* 默认给一个浅灰色边框 */
   margin-bottom: 8px;
   cursor: pointer;
   transition: background-color 0.2s ease, border-color 0.2s ease;
+  overflow: hidden; /* 防止伪元素溢出 */
 }
 
 .collection-selector-item:hover {
   background-color: #f5f5f5; /* 轻微的悬停背景色 */
+  border-color: #d0d0d0;
 }
 
-/* 选中状态的样式 */
-.collection-selector-item.selected {
+/* --- 新增样式: 已收藏状态的样式 --- */
+.collection-selector-item.collected {
   background-color: rgba(127, 90, 240, 0.1); /* 主题淡紫色 */
   border-color: var(--primary-purple, #7f5af0); /* 主题紫色边框 */
   font-weight: 600;
 }
+
+.collection-selector-item.collected .collection-selector-item__name {
+    color: var(--primary-purple, #7f5af0); /* 选中时文字也变色 */
+}
+
+/* 为已收藏的项添加一个对勾图标 */
+.collection-selector-item.collected::after {
+  content: '✓'; /* 对勾符号 */
+  position: absolute;
+  top: 50%;
+  right: 15px;
+  transform: translateY(-50%);
+  font-size: 1.4rem; /* 调整图标大小 */
+  font-weight: bold;
+  color: var(--primary-purple, #7f5af0);
+}
+/* --- 新增样式结束 --- */
+
 
 /* 列表项中的图片 */
 .collection-selector-item__image {
@@ -62,13 +82,17 @@
   flex-shrink: 0;
 }
 
+/* 图片占位符 */
+.collection-selector-item__image.placeholder {
+  background-color: #eee;
+  /* (可选) 可以添加一个音乐图标 */
+}
+
 /* 列表项中的名称 */
 .collection-selector-item__name {
   color: #333;
 }
-.collection-selector-item.selected .collection-selector-item__name {
-    color: var(--primary-purple, #7f5af0); /* 选中时文字也变色 */
-}
+
 
 /* “加载中”或“列表为空”的状态文本样式 */
 .selector-status {

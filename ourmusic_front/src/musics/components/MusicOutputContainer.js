@@ -1,24 +1,26 @@
 import React, { useState, useEffect, useContext } from "react";
 import axiosClient from "../../api-config";
 import MusicOutput from "./MusicOutput";
-import { useAudio } from "../../context/audio-context"; // 引入 audio context
-import { AuthContext } from "../../context/auth-context"; // 引入 auth context
+import { useAudio } from "../../context/audio-context";
+import { AuthContext } from "../../context/auth-context";
 
-// 这个组件是“智能”的，它负责获取数据和处理事件
 const MusicOutputContainer = ({ musicKey, keyValue, width }) => {
   const [musics, setMusics] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [title, setTitle] = useState("加载中..."); // 新增: 标题状态
+  const [title, setTitle] = useState("加载中...");
 
-  // 获取 context
   const { playTrack } = useAudio();
   const auth = useContext(AuthContext);
 
   useEffect(() => {
-    // 根据 props 设置标题
+    // 关键修改：如果认证过程还未结束，则不执行任何操作，直接返回。
+    if (auth.isAuthLoading) {
+      return;
+    }
+
     if (musicKey === "Recommend") {
-      setTitle(keyValue); // 推荐列表的标题就是 keyValue, e.g., "华语流行"
+      setTitle(keyValue);
     } else if (musicKey === "Shared") {
       setTitle(`音乐分享`);
     }
@@ -28,6 +30,12 @@ const MusicOutputContainer = ({ musicKey, keyValue, width }) => {
       setError(null);
       const params = new URLSearchParams();
       let url = "";
+
+      // 这里的逻辑现在只会在认证状态确定后运行
+      if (auth.userId) {
+        params.set("operateUserId", auth.userId);
+      }
+
       switch (musicKey) {
         case "Recommend":
           if (keyValue) params.set("musicGenre", keyValue);
@@ -79,9 +87,9 @@ const MusicOutputContainer = ({ musicKey, keyValue, width }) => {
       }
     };
     fetchMusicData();
-  }, [musicKey, keyValue]);
+    // 关键修改：依赖数组中加入 isAuthLoading
+  }, [musicKey, keyValue, auth.userId, auth.isAuthLoading]);
 
-  // --- 新增: 表头事件处理函数 ---
   const handlePlayAll = (musicList) => {
     if (musicList && musicList.length > 0) {
       playTrack(musicList[0], musicList);
@@ -89,7 +97,6 @@ const MusicOutputContainer = ({ musicKey, keyValue, width }) => {
   };
 
   const handleSearchGenre = () => {
-    // 这里的逻辑与您最初在 MusicOutput 中的逻辑相同
     axiosClient.post("/api/search", {
       searchContent: keyValue,
       searchType: "NEGATIVE",
@@ -97,7 +104,6 @@ const MusicOutputContainer = ({ musicKey, keyValue, width }) => {
     });
   };
 
-  // 将所有需要的数据和函数作为 props 传递给 MusicOutput
   return (
     <MusicOutput
       musics={musics}

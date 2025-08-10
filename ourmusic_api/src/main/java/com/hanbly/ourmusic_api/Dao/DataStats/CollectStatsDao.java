@@ -32,8 +32,21 @@ public interface CollectStatsDao extends JpaRepository<CollectStats, Integer>, J
 
     CollectStats findByCollectStatsOwnerTypeAndCollectStatsOwnerIdAndCollectStatsdByUser_UserId(CollectStats.OwnerType collectStatsOwnerType, Integer collectStatsOwnerId, Integer collectStatsdByUserId);
 
-    @Query("SELECT l.collectStatsOwnerId, COUNT(l) FROM CollectStats l WHERE l.collectStatsOwnerType = :collectStatsOwnerType AND l.collectStatsOwnerId IN :ids GROUP BY l.collectStatsOwnerId")
+    Boolean existsByCollectStatsOwnerTypeAndCollectStatsOwnerIdAndCollectStatsdByUser_UserId(CollectStats.OwnerType collectStatsOwnerType, Integer collectStatsOwnerId, Integer collectStatsdByUserId);
+
+    Boolean existsByCollectStatsOwnerTypeAndCollectStatsOwnerIdAndCollectStatsdByUser_UserIdAndCollectStatsToCollection_CollectionNameNot(CollectStats.OwnerType collectStatsOwnerType, Integer collectStatsOwnerId, Integer collectStatsdByUserId, String collectionName);
+
+    Boolean existsByCollectStatsOwnerTypeAndCollectStatsOwnerIdAndCollectStatsdByUser_UserIdAndCollectStatsToCollection_CollectionIdAndCollectStatsToCollection_CollectionNameNot(CollectStats.OwnerType collectStatsOwnerType, Integer collectStatsOwnerId, Integer collectStatsdByUserId, Integer collectionId, String collectionName);
+
+    @Query("SELECT cs.collectStatsOwnerId, COUNT(cs) FROM CollectStats cs WHERE cs.collectStatsOwnerType = :collectStatsOwnerType AND cs.collectStatsOwnerId IN :ids GROUP BY cs.collectStatsOwnerId")
     List<CountDto> findCollectStatsCountsForIdsGroupedById(@Param("collectStatsOwnerType") CollectStats.OwnerType collectStatsOwnerType, @Param("ids") Set<Integer> ids);
+
+    @Query("SELECT cs.collectStatsOwnerId, COUNT(cs) FROM CollectStats cs " +
+            "JOIN cs.collectStatsToCollection mc " +
+            "WHERE cs.collectStatsOwnerType = :collectStatsOwnerType " +
+            "AND mc.collectionName NOT LIKE :mcName " +
+            "AND cs.collectStatsOwnerId IN :ids GROUP BY cs.collectStatsOwnerId")
+    List<CountDto> findCollectStatsCountsForIdsGroupedByIdButNotHistory(@Param("collectStatsOwnerType") CollectStats.OwnerType collectStatsOwnerType, @Param("ids") Set<Integer> ids, @Param("mcName") String mcName);
 
     @Query("SELECT cs.collectStatsOwnerId, Max(cs.collectStatsTimestamp) " +
             "FROM CollectStats cs " +

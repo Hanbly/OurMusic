@@ -12,7 +12,7 @@ import java.util.List;
 public interface MusicCollectionService {
     MusicCollection addCollection(MusicCollectionDto collection);
 
-    MusicCollectionDtoDetail getCollectionByCollectionId(Integer collectionId, Pageable musicPageable);
+    MusicCollectionDtoDetail getCollectionByCollectionId(Integer collectionId, Integer operateUserId, Pageable musicPageable);
 
 //    MusicCollection updateMusicToCollection(Integer collectionId, Integer musicId);
 //
@@ -36,9 +36,9 @@ public interface MusicCollectionService {
 
     void deleteCollectionByCollectionIds(List<Integer> collectionIds);
 
-    Page<MusicCollectionDto> getCollectionBySomething(Integer userId, String collectionName, String collectionGenre, String mode, Pageable pageable);
+    Page<MusicCollectionDto> getCollectionBySomething(Integer userId, String collectionName, String collectionGenre, String mode, Integer operateUserId, Pageable pageable);
 
-    Page<MusicCollectionDto> getCollectionByUserId(Integer userId, String searchState, Pageable pageable);
+    Page<MusicCollectionDto> getCollectionByUserId(Integer userId, String searchState, Integer operateUserId, Integer musicId, Pageable pageable);
 
     Page<MusicCollectionDto> getMarkedCollectionByUserId(Integer userId, Pageable pageable);
 

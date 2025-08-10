@@ -101,6 +101,9 @@ public class DataStatsServiceImpl implements DataStatsService {
                     collectStatsDao.save(newCollectStats);
                     isCollected = true;
                 }else{
+                    if(!collection.getCollectionName().equals("默认歌单") && !collection.getCollectionName().equals("历史记录")){
+                        return ResponseMessage.success("相同音乐已经存在于歌单中哦！", null);
+                    }
                     collection.getMusics().remove(music);
                     collectStatsDao.delete(collectStats);
                 }

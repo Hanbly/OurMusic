@@ -39,35 +39,50 @@ const CollectionInfo = () => {
   const [selectedMusicIds, setSelectedMusicIds] = useState([]);
   const [isRemoving, setIsRemoving] = useState(false);
 
+  // 判断当前播放列表是否与此歌单的音乐列表完全一致
   const isCurrentCollectionPlaying =
+    playlist.length === musics.length &&
     playlist.length > 0 &&
-    musics.length > 0 &&
-    playlist[0].musicId === musics[0].musicId;
+    playlist.every((track, index) => track.musicId === musics[index].musicId);
+
 
   useEffect(() => {
+    if (auth.isAuthLoading) {
+        return;
+    }
+
     const fetchCollectionDetails = async () => {
+      // 每次请求前重置状态，但保留 collectionData 以避免页面闪烁
       setIsLoading(true);
       setError(null);
       try {
         const response = await axiosClient.get(`/api/collection/${collectionId}`, {
           params: {
             page: currentPage - 1,
-            size: 15
+            size: 15,
+            operateUserId: auth.userId || -1,
           }
         });
         const result = response.data;
-        if (result && result.code === 200) {
-          setCollectionData(result.data);
-          setMusics(result.data.musics || []);
-          setTotalPages(result.data.totalPages || 1);
+        if (result && result.code === 200 && result.data) {
+          const data = result.data;
+          setCollectionData(data);
+          
+          // --- 关键修改：根据实际数据结构解析 ---
+          setMusics(data.musics || []); 
+          setTotalPages(data.totalPages || 1);
+          
+          // 只有在第一页时才加载初始评论
           if (currentPage === 1) {
-            setComments(result.data.commentDto || []);
+            setComments(data.commentDto || []);
           }
+          // ------------------------------------
+
         } else {
           throw new Error(result.message || '未能获取歌单详情');
         }
       } catch (err) {
-        setError(err.message);
+        setError(err.message || '加载歌单失败');
       } finally {
         setIsLoading(false);
       }
@@ -75,7 +90,7 @@ const CollectionInfo = () => {
 
     fetchCollectionDetails();
 
-  }, [collectionId, currentPage]);
+  }, [collectionId, currentPage, auth.userId, auth.isAuthLoading]);
 
   useEffect(() => {
     if (!isManaging) {
@@ -176,17 +191,10 @@ const CollectionInfo = () => {
     setError(null);
 
     try {
-      const removalPromises = selectedMusicIds.map(musicId => {
-        return axiosClient.put(`/api/data-stats/d-collect/MUSIC/${musicId}/user/${auth.userId}/out-collection/${collectionId}`);
+      // 假设后端支持批量删除
+      await axiosClient.put(`/api/collection/${collectionId}/user/${auth.userId}/remove-musics`, { 
+        musicIds: selectedMusicIds 
       });
-      
-      const results = await Promise.allSettled(removalPromises);
-
-      const failedRemovals = results.filter(result => result.status === 'rejected' || result.value.data.code !== 200);
-
-      if (failedRemovals.length > 0) {
-        throw new Error('部分或全部歌曲移出失败');
-      }
 
       setMusics(prevMusics => prevMusics.filter(music => !selectedMusicIds.includes(music.musicId)));
       setCollectionData(prevData => ({
@@ -198,12 +206,13 @@ const CollectionInfo = () => {
       setSelectedMusicIds([]);
 
     } catch (err) {
-      setError(err.message || '移出歌曲时发生未知错误，请稍后重试。');
+      setError(err.response?.data?.message || '移出歌曲时发生未知错误，请稍后重试。');
     } finally {
       setIsRemoving(false);
     }
   };
-
+  
+  // 渲染逻辑
   if (isLoading && !collectionData) {
     return <div className="page-status">正在加载歌单...</div>;
   }
@@ -218,7 +227,6 @@ const CollectionInfo = () => {
 
   return (
     <div className="collection-info-page collection-detail-view">
-      {/* ===== 结构变更：左侧主内容区 ===== */}
       <div className="collection-main-content">
         <header className="collection-info-header">
           <div className="header__image-container" onClick={handlePlayAll}>
@@ -233,8 +241,8 @@ const CollectionInfo = () => {
             <p className="header__description">{collectionData.collectionDescription || '暂无描述'}</p>
             <div className="header__meta">
               <Link to={`/${collectionData.user.userId}/myMusics`} className="header__user">
-                <img src={collectionData.user.userAvatarFileUrl} alt={collectionData.user.userNickName ? collectionData.user.userNickName : collectionData.user.userName} className="user__avatar" />
-                <span>{collectionData.user.userNickName ? collectionData.user.userNickName : collectionData.user.userName}</span>
+                <img src={collectionData.user.userAvatarFileUrl} alt={collectionData.user.userNickName || collectionData.user.userName} className="user__avatar" />
+                <span>{collectionData.user.userNickName || collectionData.user.userName}</span>
               </Link>
               <span className="meta__song-count">{collectionData.collectionMusicsNumber} 首音乐</span>
             </div>
@@ -265,7 +273,7 @@ const CollectionInfo = () => {
             </div>
           )}
           {error && <p className="page-status error" style={{padding: '10px 0'}}>{error}</p>}
-          {isLoading && currentPage > 1 ? ( // 仅在翻页时显示加载状态
+          {isLoading && currentPage > 1 ? (
             <div className="page-status">正在加载音乐...</div>
           ) : (
             <>
@@ -284,9 +292,7 @@ const CollectionInfo = () => {
                       )}
                       <MusicListItemPublic 
                         music={music}
-                        index={(currentPage - 1) * 15 + index + 1}
-                        onPlay={() => handlePlaySingle(music)}
-                        isPlaying={currentTrack?.musicId === music.musicId && isPlaying}
+                        musicList={musics}
                         width="100%"
                       />
                     </li>
@@ -307,7 +313,6 @@ const CollectionInfo = () => {
         </main>
       </div>
 
-      {/* ===== 结构变更：右侧评论区 ===== */}
       <aside className="collection-comments-section">
         <h3 className="comments-section-title">评论 ({collectionData.collectionCommentedCount})</h3>
         <div className="comments-list-wrapper">

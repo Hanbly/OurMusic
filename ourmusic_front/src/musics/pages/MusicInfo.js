@@ -60,87 +60,112 @@ const MusicInfo = ({ musicData, onClose, onCommentAdded }) => {
   } = useAudio();
   const auth = useContext(AuthContext);
 
+  // --- 关键修改 1: 引入内部状态作为唯一数据源 ---
+  const [internalMusicData, setInternalMusicData] = useState(musicData);
+
   const [activeView, setActiveView] = useState("details");
   const [commentText, setCommentText] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [commentError, setCommentError] = useState("");
   const textareaRef = useRef(null);
 
-  const [comments, setComments] = useState(musicData.commentsDto || []);
+  const [comments, setComments] = useState([]);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showCollectionModal, setShowCollectionModal] = useState(false);
 
-  const [isLiked, setIsLiked] = useState(musicData.isLiked || false);
-  const [isDisliked, setIsDisliked] = useState(musicData.isDisliked || false);
-  const [isCollected, setIsCollected] = useState(
-    musicData.isCollected || false
-  );
+  const [isLiked, setIsLiked] = useState(false);
+  const [isDisliked, setIsDisliked] = useState(false);
+  const [isCollected, setIsCollected] = useState(false);
   const [isInteracting, setIsInteracting] = useState(false);
 
-  const [likeCount, setLikeCount] = useState(musicData.musicLikedCount || 0);
-  const [dislikeCount, setDislikeCount] = useState(
-    musicData.musicDislikedCount || 0
-  );
-  const [collectCount, setCollectCount] = useState(
-    musicData.musicCollectedCount || 0
-  );
-  const [downloadCount, setDownloadCount] = useState(
-    musicData.musicDownloadCount || 0
-  );
+  const [likeCount, setLikeCount] = useState(0);
+  const [dislikeCount, setDislikeCount] = useState(0);
+  const [collectCount, setCollectCount] = useState(0);
+  const [downloadCount, setDownloadCount] = useState(0);
 
   const progressBarRef = useRef(null);
   const volumeBarRef = useRef(null);
   const menuRef = useRef(null);
   const triggerRef = useRef(null);
-  const playRequestRef = useRef(null); // 播放请求锁
+  const playRequestRef = useRef(null);
 
+  // --- 关键修改 2: 添加 useEffect 以获取最新的、包含用户状态的数据 ---
   useEffect(() => {
-    if (!musicData || !musicData.musicId) {
-      return; // 如果没有音乐数据，直接返回
-    }
-    // 如果要播放的歌已经是当前播放器里的歌，就什么都不做。
-    if (musicData.musicId === currentTrack?.musicId) {
-      playRequestRef.current = musicData.musicId; // 同步一下我们的请求锁
+    // 立即用传入的 props 更新，保证切换歌曲时 UI 响应迅速
+    setInternalMusicData(musicData);
+
+    if (!musicData || !musicData.musicId || auth.isAuthLoading) {
       return;
     }
-    // 如果我们在这个渲染周期中已经请求播放过这首歌，也直接返回。
-    if (playRequestRef.current === musicData.musicId) {
+
+    const fetchDetailedMusicData = async () => {
+      try {
+        const params = {};
+        if (auth.userId) {
+          params.operateUserId = auth.userId;
+        }
+        const response = await axiosClient.get(`/api/music/${musicData.musicId}`, { params });
+        if (response.data.code === 200 && response.data.data) {
+          // 使用从API获取的最新数据更新内部状态
+          setInternalMusicData(response.data.data);
+        }
+      } catch (error) {
+        console.error("Failed to fetch detailed music info:", error);
+        // 如果获取失败，仍然使用 props 传入的数据
+      }
+    };
+
+    fetchDetailedMusicData();
+  }, [musicData, auth.userId, auth.isAuthLoading]);
+
+
+  // 自动播放逻辑
+  useEffect(() => {
+    if (!internalMusicData || !internalMusicData.musicId) return;
+    if (internalMusicData.musicId === currentTrack?.musicId) {
+      playRequestRef.current = internalMusicData.musicId;
       return;
     }
-    playRequestRef.current = musicData.musicId;
-    playTrack(musicData, [musicData], auth.userId);
-  }, [musicData, currentTrack, playTrack]); // 依赖项保持不变
+    if (playRequestRef.current === internalMusicData.musicId) return;
 
-  const isThisMusicPlaying =
-    currentTrack?.musicId === musicData.musicId && isPlaying;
-  const isCurrentlySelectedTrack = currentTrack?.musicId === musicData.musicId;
-  const isOwner = auth.userId && musicData.userDto.userId === auth.userId;
+    playRequestRef.current = internalMusicData.musicId;
+    playTrack(internalMusicData, [internalMusicData], auth.userId);
+  }, [internalMusicData.musicId, playTrack]);
 
-  // 当 musicData prop 改变时，重置所有相关状态
+  const isThisMusicPlaying = currentTrack?.musicId === internalMusicData.musicId && isPlaying;
+  const isCurrentlySelectedTrack = currentTrack?.musicId === internalMusicData.musicId;
+  const isOwner = auth.userId && internalMusicData.userDto?.userId === auth.userId;
+
+  // --- 关键修改 3: 所有衍生状态都依赖于 internalMusicData ---
   useEffect(() => {
-    setComments(musicData.commentsDto || []);
-    setIsLiked(musicData.isLiked || false);
-    setIsDisliked(musicData.isDisliked || false);
-    setIsCollected(musicData.isCollected || false);
-    setLikeCount(musicData.musicLikedCount || 0);
-    setDislikeCount(musicData.musicDislikedCount || 0);
-    setCollectCount(musicData.musicCollectedCount || 0);
-  }, [musicData]);
+    if (internalMusicData) {
+      setComments(internalMusicData.commentsDto || []);
+      setIsLiked(internalMusicData.operateUserLikedOrNot || false);
+      setIsDisliked(internalMusicData.operateUserDislikedOrNot || false);
+      setIsCollected(internalMusicData.operateUserCollectedOrNot || false);
+      setLikeCount(internalMusicData.musicLikedCount || 0);
+      setDislikeCount(internalMusicData.musicDislikedCount || 0);
+      setCollectCount(internalMusicData.musicCollectedCount || 0);
+      setDownloadCount(internalMusicData.musicDownloadCount || 0);
+    }
+  }, [internalMusicData]);
 
+  // --- 以下所有函数中的 musicData 都替换为 internalMusicData ---
   const handleLikeClick = () => {
     if (isInteracting) return;
     setIsInteracting(true);
     axiosClient
-      .post(
-        `/api/data-stats/like/MUSIC/${musicData.musicId}/user/${auth.userId}`
-      )
+      .post(`/api/data-stats/like/MUSIC/${internalMusicData.musicId}/user/${auth.userId}`)
       .then((response) => {
         if (response.data.message === "点赞成功") {
           setIsLiked(true);
           setLikeCount((prev) => prev + 1);
           if (isDisliked) {
-            handleDislikeClick();
-            setIsDisliked(false);
+            axiosClient.post(`/api/data-stats/dislike/MUSIC/${internalMusicData.musicId}/user/${auth.userId}`)
+            .then(() => {
+                setIsDisliked(false);
+                setDislikeCount(prev => prev - 1);
+            });
           }
         } else if (response.data.message === "取消点赞成功") {
           setIsLiked(false);
@@ -155,16 +180,17 @@ const MusicInfo = ({ musicData, onClose, onCommentAdded }) => {
     if (isInteracting) return;
     setIsInteracting(true);
     axiosClient
-      .post(
-        `/api/data-stats/dislike/MUSIC/${musicData.musicId}/user/${auth.userId}`
-      )
+      .post(`/api/data-stats/dislike/MUSIC/${internalMusicData.musicId}/user/${auth.userId}`)
       .then((response) => {
         if (response.data.message === "点踩成功") {
           setIsDisliked(true);
           setDislikeCount((prev) => prev + 1);
           if (isLiked) {
-            handleLikeClick();
-            setIsLiked(false);
+             axiosClient.post(`/api/data-stats/like/MUSIC/${internalMusicData.musicId}/user/${auth.userId}`)
+            .then(() => {
+                setIsLiked(false);
+                setLikeCount(prev => prev - 1);
+            });
           }
         } else if (response.data.message === "取消点踩成功") {
           setIsDisliked(false);
@@ -177,9 +203,7 @@ const MusicInfo = ({ musicData, onClose, onCommentAdded }) => {
 
   const handleFavoriteClick = () => {
     axiosClient
-      .put(
-        `/api/data-stats/collect/MUSIC/${musicData.musicId}/user/${auth.userId}/default`
-      )
+      .put(`/api/data-stats/collect/MUSIC/${internalMusicData.musicId}/user/${auth.userId}/default`)
       .then((response) => {
         if (response.data.message === "音乐加入默认歌单成功") {
           setIsCollected(true);
@@ -194,22 +218,12 @@ const MusicInfo = ({ musicData, onClose, onCommentAdded }) => {
 
   const handleDownloadClick = () => {
     axiosDownload
-      .get(
-        `${musicData.musicFileUrl}?musicId=${musicData.musicId}&userId=${auth.userId}`,
-        {
-          responseType: "blob",
-        }
-      )
+      .get(`${internalMusicData.musicFileUrl}?musicId=${internalMusicData.musicId}&userId=${auth.userId}`, { responseType: "blob" })
       .then((response) => {
         const url = window.URL.createObjectURL(new Blob([response.data]));
         const link = document.createElement("a");
         link.href = url;
-        link.setAttribute(
-          "download",
-          `${musicData.musicName}${getFileExtensionWithRegex(
-            musicData.musicFileUrl
-          )}`
-        );
+        link.setAttribute("download", `${internalMusicData.musicName}${getFileExtensionWithRegex(internalMusicData.musicFileUrl)}`);
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -221,10 +235,46 @@ const MusicInfo = ({ musicData, onClose, onCommentAdded }) => {
     if (isThisMusicPlaying) {
       togglePlayPause();
     } else {
-      playTrack(musicData, [musicData], auth.userId);
+      playTrack(internalMusicData, [internalMusicData], auth.userId);
     }
   };
 
+  const handlePostComment = async (e) => {
+    e.preventDefault();
+    if (!commentText.trim()) {
+      setCommentError("评论内容不能为空哦");
+      return;
+    }
+    if (!auth.userId) {
+      auth.openLoginModal();
+      return;
+    }
+    setIsSubmitting(true);
+    setCommentError("");
+    try {
+      const response = await axiosClient.post(`/api/comment`, {
+        commentContent: commentText,
+        commentOwnerType: "MUSIC",
+        commentOwnerId: internalMusicData.musicId,
+        userDto: { userId: auth.userId },
+      });
+      if (response.data && response.data.code === 200) {
+        setCommentText("");
+        if (textareaRef.current) textareaRef.current.style.height = "auto";
+        const newComment = response.data.data;
+        setComments((prevComments) => [newComment, ...prevComments]);
+        onCommentAdded(newComment);
+      } else {
+        throw new Error(response.data.message || "发布失败");
+      }
+    } catch (err) {
+      setCommentError(err.response?.data?.message || "发布评论时发生错误，请稍后再试。");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // ... 其他没有引用 musicData 的函数保持不变 ...
   const handleProgressDrag = (e) => {
     const progressBar = progressBarRef.current;
     if (!progressBar || !duration) return;
@@ -234,10 +284,7 @@ const MusicInfo = ({ musicData, onClose, onCommentAdded }) => {
     seek(newProgress * duration);
     const handleMouseMove = (moveEvent) => {
       const moveOffsetX = moveEvent.clientX - rect.left;
-      const newMoveProgress = Math.max(
-        0,
-        Math.min(1, moveOffsetX / rect.width)
-      );
+      const newMoveProgress = Math.max(0, Math.min(1, moveOffsetX / rect.width));
       seek(newMoveProgress * duration);
     };
     const handleMouseUp = () => {
@@ -270,12 +317,7 @@ const MusicInfo = ({ musicData, onClose, onCommentAdded }) => {
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (
-        menuRef.current &&
-        !menuRef.current.contains(event.target) &&
-        triggerRef.current &&
-        !triggerRef.current.contains(event.target)
-      ) {
+      if (menuRef.current && !menuRef.current.contains(event.target) && triggerRef.current && !triggerRef.current.contains(event.target)) {
         setIsMenuOpen(false);
       }
     };
@@ -306,18 +348,12 @@ const MusicInfo = ({ musicData, onClose, onCommentAdded }) => {
   };
 
   const handleDownload = (track) => {
-    axiosDownload
-      .get(`${track.musicFileUrl}`, {
-        responseType: "blob",
-      })
+    axiosDownload.get(`${track.musicFileUrl}`, { responseType: "blob" })
       .then((response) => {
         const url = window.URL.createObjectURL(new Blob([response.data]));
         const link = document.createElement("a");
         link.href = url;
-        link.setAttribute(
-          "download",
-          `${track.musicName}${getFileExtensionWithRegex(track.musicFileUrl)}`
-        );
+        link.setAttribute("download", `${track.musicName}${getFileExtensionWithRegex(track.musicFileUrl)}`);
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -325,9 +361,7 @@ const MusicInfo = ({ musicData, onClose, onCommentAdded }) => {
   };
 
   function getFileExtensionWithRegex(filename) {
-    if (typeof filename !== "string") {
-      return "";
-    }
+    if (typeof filename !== "string") return "";
     const match = filename.match(/\.[^.]+$/);
     return match ? match[0] : "";
   }
@@ -336,59 +370,15 @@ const MusicInfo = ({ musicData, onClose, onCommentAdded }) => {
     alert(`歌曲《${currentTrack.musicName}》收藏成功！`);
   };
 
-  const handlePostComment = async (e) => {
-    e.preventDefault();
-    if (!commentText.trim()) {
-      setCommentError("评论内容不能为空哦");
-      return;
-    }
-    if (!auth.userId) {
-      auth.openLoginModal();
-      return;
-    }
-    setIsSubmitting(true);
-    setCommentError("");
-    try {
-      const response = await axiosClient.post(`/api/comment`, {
-        commentContent: commentText,
-        commentOwnerType: "MUSIC",
-        commentOwnerId: musicData.musicId,
-        userDto: { userId: auth.userId },
-      });
-      if (response.data && response.data.code === 200) {
-        setCommentText("");
-        if (textareaRef.current) {
-          textareaRef.current.style.height = "auto";
-        }
-        const newComment = response.data.data;
-        setComments((prevComments) => [newComment, ...prevComments]);
-        onCommentAdded(newComment);
-      } else {
-        throw new Error(response.data.message || "发布失败");
-      }
-    } catch (err) {
-      setCommentError(
-        err.response?.data?.message || "发布评论时发生错误，请稍后再试。"
-      );
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
   const handleReplyAdded = (newReply, parentCommentId) => {
     const addReplyToTree = (nodes) => {
       return nodes.map((node) => {
         if (node.commentId === parentCommentId) {
-          const updatedSubComments = node.subCommentsDto
-            ? [...node.subCommentsDto, newReply]
-            : [newReply];
+          const updatedSubComments = node.subCommentsDto ? [...node.subCommentsDto, newReply] : [newReply];
           return { ...node, subCommentsDto: updatedSubComments };
         }
         if (node.subCommentsDto && node.subCommentsDto.length > 0) {
-          return {
-            ...node,
-            subCommentsDto: addReplyToTree(node.subCommentsDto),
-          };
+          return { ...node, subCommentsDto: addReplyToTree(node.subCommentsDto) };
         }
         return node;
       });
@@ -412,35 +402,29 @@ const MusicInfo = ({ musicData, onClose, onCommentAdded }) => {
 
   const PlayModeIcon = () => {
     switch (playMode) {
-      case PlayModes.SINGLE_REPEAT:
-        return <BsRepeat1 />;
-      case PlayModes.SHUFFLE:
-        return <BsShuffle />;
-      case PlayModes.LIST_LOOP:
-      default:
-        return <BsRepeat />;
+      case PlayModes.SINGLE_REPEAT: return <BsRepeat1 />;
+      case PlayModes.SHUFFLE: return <BsShuffle />;
+      case PlayModes.LIST_LOOP: default: return <BsRepeat />;
     }
   };
 
   const getPlayModeTitle = () => {
     switch (playMode) {
-      case PlayModes.SINGLE_REPEAT:
-        return "单曲循环";
-      case PlayModes.SHUFFLE:
-        return "随机播放";
-      case PlayModes.LIST_LOOP:
-      default:
-        return "列表循环";
+      case PlayModes.SINGLE_REPEAT: return "单曲循环";
+      case PlayModes.SHUFFLE: return "随机播放";
+      case PlayModes.LIST_LOOP: default: return "列表循环";
     }
   };
+  
+  // 如果数据还没加载完成，可以显示一个加载状态或什么都不显示
+  if (!internalMusicData) {
+    return null; // 或者一个加载指示器
+  }
 
-  const { userDto } = musicData;
-  const releaseYear = musicData.musicYear
-    ? new Date(musicData.musicYear).getFullYear()
-    : "未知";
+  const { userDto } = internalMusicData;
+  const releaseYear = internalMusicData.musicYear ? new Date(internalMusicData.musicYear).getFullYear() : "未知";
   const triggerRect = triggerRef.current?.getBoundingClientRect();
 
-  // console.log("当前进度值:", progress, "当前时间:", currentTime, "总时长:", duration);
   return (
     <>
       {currentTrack && (
@@ -456,27 +440,23 @@ const MusicInfo = ({ musicData, onClose, onCommentAdded }) => {
       <div className="music-info-panel">
         <div
           className="music-info-panel__background"
-          style={{ backgroundImage: `url(${musicData.musicImageFileUrl})` }}
+          style={{ backgroundImage: `url(${internalMusicData.musicImageFileUrl})` }}
         />
 
         <div className="music-info__left">
           <div className="art-container" onClick={handlePlayMusic}>
             <img
-              src={musicData.musicImageFileUrl}
-              alt={musicData.musicName}
+              src={internalMusicData.musicImageFileUrl}
+              alt={internalMusicData.musicName}
               className="art-cover"
             />
             <div className="vinyl-record" />
             <div className="play-overlay">
-              {isThisMusicPlaying ? (
-                <FaPause size={50} />
-              ) : (
-                <FaPlay size={50} />
-              )}
+              {isThisMusicPlaying ? <FaPause size={50} /> : <FaPlay size={50} />}
             </div>
           </div>
-          <h1 className="music-info__title">{musicData.musicName}</h1>
-          <p className="music-info__artist">{musicData.musicArtist}</p>
+          <h1 className="music-info__title">{internalMusicData.musicName}</h1>
+          <p className="music-info__artist">{internalMusicData.musicArtist}</p>
           <div className="music-info__actions">
             <button
               className="icon-button"
@@ -532,11 +512,7 @@ const MusicInfo = ({ musicData, onClose, onCommentAdded }) => {
                 </div>
                 <span className="time-display">{formatTime(duration)}</span>
                 <div className="volume-controls">
-                  <button
-                    title="静音"
-                    className="player-button"
-                    onClick={toggleMute}
-                  >
+                  <button title="静音" className="player-button" onClick={toggleMute}>
                     <VolumeIcon />
                   </button>
                   <div
@@ -554,18 +530,10 @@ const MusicInfo = ({ musicData, onClose, onCommentAdded }) => {
               </div>
 
               <div className="music-info-player__controls">
-                <button
-                  title="快退15秒"
-                  className="player-button secondary"
-                  onClick={rewind15}
-                >
+                <button title="快退15秒" className="player-button secondary" onClick={rewind15}>
                   <RiReplay15Line />
                 </button>
-                <button
-                  title="上一首"
-                  className="player-button"
-                  onClick={playPrevious}
-                >
+                <button title="上一首" className="player-button" onClick={playPrevious}>
                   <IoPlayBackOutline />
                 </button>
                 <button
@@ -575,21 +543,13 @@ const MusicInfo = ({ musicData, onClose, onCommentAdded }) => {
                 >
                   {isPlaying ? <FaPause /> : <FaPlay />}
                 </button>
-                <button
-                  title="下一首"
-                  className="player-button"
-                  onClick={playNext}
-                >
+                <button title="下一首" className="player-button" onClick={playNext}>
                   <IoPlayForwardOutline />
                 </button>
-                <button
-                  title={getPlayModeTitle()}
-                  className="player-button secondary"
-                  onClick={togglePlayMode}
-                >
+                <button title={getPlayModeTitle()} className="player-button secondary" onClick={togglePlayMode}>
                   <PlayModeIcon />
                 </button>
-                <div className="player-menu-container">
+                {/* <div className="player-menu-container">
                   <button
                     ref={triggerRef}
                     title="更多操作"
@@ -598,7 +558,7 @@ const MusicInfo = ({ musicData, onClose, onCommentAdded }) => {
                   >
                     <BsThreeDots />
                   </button>
-                </div>
+                </div> */}
               </div>
             </div>
           )}
@@ -611,31 +571,27 @@ const MusicInfo = ({ musicData, onClose, onCommentAdded }) => {
 
           <header className="view-switcher">
             <button
-              className={`switcher-tab ${
-                activeView === "details" ? "active" : ""
-              }`}
+              className={`switcher-tab ${activeView === "details" ? "active" : ""}`}
               onClick={() => setActiveView("details")}
             >
               歌曲信息
             </button>
             <button
-              className={`switcher-tab ${
-                activeView === "comments" ? "active" : ""
-              }`}
+              className={`switcher-tab ${activeView === "comments" ? "active" : ""}`}
               onClick={() => setActiveView("comments")}
             >
-              评论 ({musicData.musicCommentedCount})
+              评论 ({internalMusicData.musicCommentedCount})
             </button>
           </header>
 
           <main className="view-content">
-            {activeView === "details" && (
+            {activeView === "details" && userDto && (
               <div className="details-view">
                 <dl className="details-list">
                   <dt>艺术家</dt>
-                  <dd>{musicData.musicArtist}</dd>
+                  <dd>{internalMusicData.musicArtist}</dd>
                   <dt>专辑</dt>
-                  <dd>{musicData.musicAlbum}</dd>
+                  <dd>{internalMusicData.musicAlbum}</dd>
                   <dt>年份</dt>
                   <dd>{releaseYear}</dd>
                 </dl>
@@ -643,17 +599,10 @@ const MusicInfo = ({ musicData, onClose, onCommentAdded }) => {
                   <div className="user-contribution-section">
                     <div className="user-contribution-title">
                       由{" "}
-                      <Link
-                        className="user-link"
-                        to={`/${userDto.userId}/myMusics`}
-                      >
+                      <Link className="user-link" to={`/${userDto.userId}/myMusics`}>
                         <img
                           src={userDto.userAvatarFileUrl}
-                          alt={
-                            userDto.userNickName
-                              ? userDto.userNickName
-                              : userDto.userName
-                          }
+                          alt={userDto.userNickName || userDto.userName}
                           className="user__avatar"
                         />
                       </Link>{" "}
@@ -695,16 +644,11 @@ const MusicInfo = ({ musicData, onClose, onCommentAdded }) => {
                       ref={textareaRef}
                       value={commentText}
                       onChange={handleTextareaChange}
-                      placeholder={
-                        auth.userId ? "留下你的精彩评论..." : "请登录后发表评论"
-                      }
+                      placeholder={auth.userId ? "留下你的精彩评论..." : "请登录后发表评论"}
                       rows="1"
                       disabled={!auth.userId || isSubmitting}
                     />
-                    <button
-                      type="submit"
-                      disabled={!commentText.trim() || isSubmitting}
-                    >
+                    <button type="submit" disabled={!commentText.trim() || isSubmitting}>
                       {isSubmitting ? "..." : "发布"}
                     </button>
                   </form>

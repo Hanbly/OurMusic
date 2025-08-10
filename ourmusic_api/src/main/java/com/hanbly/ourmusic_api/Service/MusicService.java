@@ -14,9 +14,11 @@ public interface MusicService {
 
     List<Music> addManyMusic(List<MusicDto> musics);
 
-    MusicDtoDetail getMusicByMusicId(Integer musicId);
+    MusicDtoDetail getMusicByMusicId(Integer musicId, Integer operateUserId);
 
-    Page<MusicDto> findMusicBySomething(String genre, String musicName, String musicArtist, String musicAlbum, String musicYear, String mode, Pageable pageable);
+    Page<MusicDto> findMusicByUserId(Integer userId, Integer operateUserId, Pageable pageable);
+
+    Page<MusicDto> findMusicBySomething(String genre, String musicName, String musicArtist, String musicAlbum, String musicYear, String mode, Integer operateUserId, Pageable pageable);
 
     List<MusicDto> findWeekHotMusicList();
 
@@ -27,6 +29,4 @@ public interface MusicService {
     void deleteMusicByMusicId(Integer musicId);
 
     void deleteMusicsByMusicIds(List<Integer> musicIds);
-
-    Page<MusicDto> findMusicByUserId(Integer userId, Pageable pageable);
 }

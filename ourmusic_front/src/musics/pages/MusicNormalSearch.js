@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { useParams } from "react-router-dom";
 import axiosClient from "../../api-config";
+import { AuthContext } from "../../context/auth-context"; // 引入 AuthContext
 
 // 组件引入
 import MusicListItemPublicLongVer from "../../shared/components/UI/MusicListItemPublicLongVer";
@@ -11,12 +12,10 @@ import { IoMusicalNotes, IoAlbums } from "react-icons/io5";
 
 import "./MusicNormalSearch.css";
 
-// 注意：FilterDropdown 组件在这个版本中不再使用，可以安全地移除其定义和引入
-
 const MusicNormalSearch = () => {
   const { searchKey } = useParams();
+  const auth = useContext(AuthContext); // 获取 auth context
 
-  // --- State 管理：为音乐和歌单分别管理服务端分页状态 ---
   const [musicData, setMusicData] = useState({
     content: [],
     pageInfo: { number: 0, totalPages: 1, size: 20 },
@@ -32,6 +31,10 @@ const MusicNormalSearch = () => {
   });
 
   useEffect(() => {
+    if (auth.isAuthLoading) {
+      return;
+    }
+
     if (!searchKey) {
       setMusicData((prev) => ({ ...prev, isLoading: false }));
       setCollectionData((prev) => ({ ...prev, isLoading: false }));
@@ -41,30 +44,34 @@ const MusicNormalSearch = () => {
     const fetchSearchResults = async () => {
       setMusicData((prev) => ({ ...prev, isLoading: true, error: null }));
       setCollectionData((prev) => ({ ...prev, isLoading: true, error: null }));
+      
+      const musicParams = {
+        musicGenre: searchKey,
+        musicName: searchKey,
+        musicArtist: searchKey,
+        musicAlbum: searchKey,
+        musicYear: searchKey,
+        mode: "search",
+        page: musicData.pageInfo.number,
+        size: musicData.pageInfo.size,
+      };
 
-      const musicRequest = axiosClient.get("/api/music/batch", {
-        params: {
-          // 后端是 OR 搜索，所以每个字段都带上 searchKey
-          musicGenre: searchKey,
-          musicName: searchKey,
-          musicArtist: searchKey,
-          musicAlbum: searchKey,
-          musicYear: searchKey,
-          mode: "search",
-          page: musicData.pageInfo.number,
-          size: musicData.pageInfo.size,
-        },
-      });
+      const collectionParams = {
+        collectionName: searchKey,
+        collectionGenre: searchKey,
+        mode: "search",
+        page: collectionData.pageInfo.number,
+        size: collectionData.pageInfo.size,
+      };
 
-      const collectionRequest = axiosClient.get("/api/collection/batch", {
-        params: {
-          collectionName: searchKey,
-          collectionGenre: searchKey,
-          mode: "search",
-          page: collectionData.pageInfo.number,
-          size: collectionData.pageInfo.size,
-        },
-      });
+      // --- 关键修改: 为两个请求都添加 operateUserId ---
+      if (auth.userId) {
+        musicParams.operateUserId = auth.userId;
+        collectionParams.operateUserId = auth.userId;
+      }
+
+      const musicRequest = axiosClient.get("/api/music/batch", { params: musicParams });
+      const collectionRequest = axiosClient.get("/api/collection/batch", { params: collectionParams });
 
       try {
         const [musicResponse, collectionResponse] = await Promise.allSettled([
@@ -72,10 +79,8 @@ const MusicNormalSearch = () => {
           collectionRequest,
         ]);
 
-        // --- 修改点：更健壮地处理音乐请求的结果 ---
         if (musicResponse.status === "fulfilled") {
           const result = musicResponse.value.data;
-          // 检查 result.data 是否存在且是一个对象
           if (
             result &&
             result.code === 200 &&
@@ -84,7 +89,7 @@ const MusicNormalSearch = () => {
           ) {
             const pageData = result.data;
             setMusicData({
-              content: pageData.content || [], // 如果 content 为 null，则给一个空数组
+              content: pageData.content || [],
               pageInfo: {
                 number: pageData.number || 0,
                 totalPages: pageData.totalPages || 1,
@@ -94,7 +99,6 @@ const MusicNormalSearch = () => {
               error: null,
             });
           } else {
-            // 即使 code=200，但 data=null，也视为无结果
             setMusicData((prev) => ({
               ...prev,
               content: [],
@@ -104,7 +108,6 @@ const MusicNormalSearch = () => {
             }));
           }
         } else {
-          // status === 'rejected'
           const errorMsg =
             musicResponse.reason?.response?.data?.message ||
             musicResponse.reason?.message ||
@@ -117,7 +120,6 @@ const MusicNormalSearch = () => {
           }));
         }
 
-        // --- 修改点：同样健壮地处理歌单请求的结果 ---
         if (collectionResponse.status === "fulfilled") {
           const result = collectionResponse.value.data;
           if (
@@ -147,7 +149,6 @@ const MusicNormalSearch = () => {
             }));
           }
         } else {
-          // status === 'rejected'
           const errorMsg =
             collectionResponse.reason?.response?.data?.message ||
             collectionResponse.reason?.message ||
@@ -160,7 +161,6 @@ const MusicNormalSearch = () => {
           }));
         }
       } catch (err) {
-        // 这个 catch 块现在基本不会被触发，但保留作为最后防线
         console.error("请求封装时发生严重错误:", err);
         const genericError = "发生意外错误，请刷新页面";
         setMusicData((prev) => ({
@@ -177,9 +177,14 @@ const MusicNormalSearch = () => {
     };
 
     fetchSearchResults();
-  }, [searchKey, musicData.pageInfo.number, collectionData.pageInfo.number]);
+  }, [
+    searchKey,
+    musicData.pageInfo.number,
+    collectionData.pageInfo.number,
+    auth.isAuthLoading,
+    auth.userId,
+  ]);
 
-  // --- 分页事件处理 ---
   const handleMusicPageChange = (newPage) => {
     setMusicData((prev) => ({
       ...prev,
@@ -194,9 +199,12 @@ const MusicNormalSearch = () => {
     }));
   };
 
-  // --- 渲染逻辑 ---
+  // 渲染逻辑部分无需修改
   const renderContent = () => {
-    if (musicData.isLoading && collectionData.isLoading) {
+    if (
+      (musicData.isLoading || collectionData.isLoading) &&
+      auth.isAuthLoading
+    ) {
       return (
         <div className="search-status-feedback">
           <FaCompactDisc className="spinner-icon" />
@@ -205,7 +213,6 @@ const MusicNormalSearch = () => {
       );
     }
 
-    // 如果两个列表都加载完成且都为空
     if (
       !musicData.isLoading &&
       !collectionData.isLoading &&
@@ -219,13 +226,11 @@ const MusicNormalSearch = () => {
 
     return (
       <div className="search-results-container">
-        {/* 音乐部分 */}
         <section className="search-results-section">
           <div className="section-header">
             <h3 className="section-title">
               <IoMusicalNotes /> 单曲
             </h3>
-            {/* 筛选器已被移除 */}
           </div>
           {musicData.isLoading ? (
             <div className="search-status-feedback">加载中...</div>
@@ -255,13 +260,11 @@ const MusicNormalSearch = () => {
           )}
         </section>
 
-        {/* 歌单部分 */}
         <section className="search-results-section">
           <div className="section-header">
             <h3 className="section-title">
               <IoAlbums /> 歌单
             </h3>
-            {/* 筛选器已被移除 */}
           </div>
           {collectionData.isLoading ? (
             <div className="search-status-feedback">加载中...</div>

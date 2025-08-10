@@ -5,23 +5,30 @@ import axiosClient from "../../api-config";
 import EditModal from "../../shared/components/EditModal/EditModal";
 import "./CollectionSelector.css";
 
-const fetchUserCollections = async (userId) => {
+const fetchUserCollections = async (userId, musicId) => {
   if (!userId) return [];
   try {
-    const response = await axiosClient.get(`/api/collection/batch-by-user`, { params: { userId, searchState: "private" } });
+    const params = { 
+      userId: userId, 
+      operateUserId: userId,
+      searchState: "private" 
+    };
+
+    if (musicId) {
+      params.musicId = musicId;
+    }
+
+    const response = await axiosClient.get(`/api/collection/batch-by-user`, { params });
     const result = response.data;
     
-    // --- 修复开始 ---
-    // API返回的是一个分页对象，实际的数组在 result.data.content 中
     if (result && result.code === 200 && result.data && Array.isArray(result.data.content)) {
       return result.data.content.map((collection) => ({
         id: collection.collectionId,
         name: collection.collectionName,
-        // 处理封面URL可能为null的情况，避免图片加载失败
         image: collection.collectionImageFileUrl || "", 
+        isCollected: collection.musicCollectedOrNot || false,
       }));
     }
-    // --- 修复结束 ---
 
     console.warn("API did not return the expected collection data structure:", result);
     return [];
@@ -31,7 +38,7 @@ const fetchUserCollections = async (userId) => {
   }
 };
 
-const CollectionSelector = ({ userId, onCollectionSelect, selectedCollectionId }) => {
+const CollectionSelector = ({ userId, musicId, onSelectionChange }) => {
   const [collections, setCollections] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -44,11 +51,12 @@ const CollectionSelector = ({ userId, onCollectionSelect, selectedCollectionId }
   const [imagePreview, setImagePreview] = useState(null);
   const [error, setError] = useState("");
   const fileInputRef = useRef(null);
-
+  
   const loadCollections = async () => {
     setLoading(true);
-    const data = await fetchUserCollections(userId);
+    const data = await fetchUserCollections(userId, musicId);
     setCollections(data);
+    onSelectionChange(data); 
     setLoading(false);
   };
   
@@ -56,9 +64,17 @@ const CollectionSelector = ({ userId, onCollectionSelect, selectedCollectionId }
     if (userId) {
         loadCollections();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId, musicId]);
 
+  const handleItemClick = (collectionId) => {
+    const updatedCollections = collections.map(c => 
+        c.id === collectionId ? { ...c, isCollected: !c.isCollected } : c
+    );
+    setCollections(updatedCollections);
+    onSelectionChange(updatedCollections);
+  };
+  
   const resetForm = () => {
     setNewCollectionName("");
     setNewCollectionDesc("");
@@ -78,7 +94,11 @@ const CollectionSelector = ({ userId, onCollectionSelect, selectedCollectionId }
     const file = event.target.files[0];
     if (file) {
       setImageFile(file);
-      setImagePreview(URL.createObjectURL(file));
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result);
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -88,21 +108,17 @@ const CollectionSelector = ({ userId, onCollectionSelect, selectedCollectionId }
       setError("歌单名称和风格为必填项。");
       return;
     }
-
     setIsSubmitting(true);
     setError("");
-
     try {
       let imageFileId = null;
       let imageUrl = "";
       if (imageFile) {
         const formData = new FormData();
         formData.append("file", imageFile);
-
         const uploadResponse = await axiosClient.post("/api/files/upload", formData, {
           headers: { "Content-Type": "multipart/form-data" },
         });
-
         if (uploadResponse.data.code === 200 && uploadResponse.data.data.customFileId && uploadResponse.data.data.fileUrl) {
           imageFileId = uploadResponse.data.data.customFileId;
           imageUrl = uploadResponse.data.data.fileUrl;
@@ -110,7 +126,6 @@ const CollectionSelector = ({ userId, onCollectionSelect, selectedCollectionId }
           throw new Error("图片上传失败，未返回URL。");
         }
       }
-
       const collectionData = {
         collectionName: newCollectionName,
         collectionDescription: newCollectionDesc,
@@ -120,19 +135,14 @@ const CollectionSelector = ({ userId, onCollectionSelect, selectedCollectionId }
         collectionStatus: isPrivate ? "PRIVATE" : "PUBLIC",
         userId: userId,
       };
-
       const createResponse = await axiosClient.post("/api/collection", collectionData);
-
       if (createResponse.data.code === 200) {
         setShowCreateModal(false);
-        const newCollection = createResponse.data.data;
-        onCollectionSelect(newCollection.collectionId); 
         await loadCollections();
       } else {
         setError(createResponse.data.message || "创建歌单时发生未知错误。");
       }
     } catch (err) {
-      console.error("Error creating collection:", err);
       setError(err.response?.data?.message || "创建歌单失败，请检查网络或联系管理员。");
     } finally {
       setIsSubmitting(false);
@@ -145,33 +155,23 @@ const CollectionSelector = ({ userId, onCollectionSelect, selectedCollectionId }
         <form onSubmit={handleCreateCollection}>
           <div className="form-group">
             <label>歌单封面 (可选)</label>
-            <input
-              type="file"
-              accept="image/*"
-              ref={fileInputRef}
-              onChange={handleImageChange}
-              style={{ display: "none" }}
-            />
+            <input type="file" accept="image/*" ref={fileInputRef} onChange={handleImageChange} style={{ display: "none" }} />
             <div className="image-upload-preview" onClick={() => fileInputRef.current.click()}>
               {imagePreview ? <img src={imagePreview} alt="预览" /> : <span>点击上传</span>}
             </div>
           </div>
-          
           <div className="form-group">
             <label htmlFor="name">歌单名称</label>
             <input id="name" type="text" value={newCollectionName} onChange={(e) => setNewCollectionName(e.target.value)} required />
           </div>
-
           <div className="form-group">
             <label htmlFor="genre">歌单风格</label>
             <input id="genre" type="text" value={newCollectionGenre} onChange={(e) => setNewCollectionGenre(e.target.value)} required />
           </div>
-
           <div className="form-group">
             <label htmlFor="desc">歌单描述</label>
             <input id="desc" type="text" value={newCollectionDesc} onChange={(e) => setNewCollectionDesc(e.target.value)} />
           </div>
-          
           <div className="form-group">
             <div className="toggle-switch-container">
               <label htmlFor="private">设为私密</label>
@@ -181,7 +181,6 @@ const CollectionSelector = ({ userId, onCollectionSelect, selectedCollectionId }
               </label>
             </div>
           </div>
-
           {error && <p className="form-error">{error}</p>}
           <button type="submit" className="form-button" disabled={isSubmitting}>
             {isSubmitting ? "正在创建..." : "确认创建"}
@@ -196,8 +195,8 @@ const CollectionSelector = ({ userId, onCollectionSelect, selectedCollectionId }
           collections.map((collection) => (
             <li 
               key={collection.id} 
-              onClick={() => onCollectionSelect(collection.id)} 
-              className={`collection-selector-item ${selectedCollectionId === collection.id ? "selected" : ""}`}
+              onClick={() => handleItemClick(collection.id)} 
+              className={`collection-selector-item ${collection.isCollected ? "collected" : ""}`}
             >
               {collection.image ? (
                 <img src={collection.image} alt={collection.name} className="collection-selector-item__image" />

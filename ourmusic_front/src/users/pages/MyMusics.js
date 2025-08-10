@@ -4,16 +4,15 @@ import { FaHistory, FaPlus } from "react-icons/fa";
 
 import axiosClient from "../../../src/api-config";
 import { AuthContext } from "../../context/auth-context";
-// import MusicOutput from "../../musics/components/MusicOutput";
-import MusicOutputContainer from "../../musics/components/MusicOutputContainer";
+// --- 关键修改 1: 引入正确的“哑”组件 MusicOutput ---
+import MusicOutput from "../../musics/components/MusicOutput"; 
 import CollectionOutput from "../../collects/components/CollectionOutput";
 import EditModal from "../../shared/components/EditModal/EditModal";
-import Pagination from "../../shared/components/UI/Pagination"; // 引入分页组件
+import Pagination from "../../shared/components/UI/Pagination";
 import "./MyMusics.css";
 
-// --- 分页逻辑辅助函数 (仅用于Modal) ---
+// --- 分页逻辑辅助函数 (仅用于Modal, 无需修改) ---
 const DOTS = "...";
-
 const getPaginationItems = (currentPage, totalPageCount, siblingCount = 1) => {
   const totalPageNumbers = siblingCount * 2 + 5;
   if (totalPageCount <= totalPageNumbers) {
@@ -50,17 +49,17 @@ const getPaginationItems = (currentPage, totalPageCount, siblingCount = 1) => {
   }
 };
 
+
 const MyMusics = () => {
   const auth = useContext(AuthContext);
-  const currentUserId = auth.userId;
   const { userId } = useParams();
-  const isLoggedInUser = Number(userId) === currentUserId;
+  const isLoggedInUser = Number(userId) === auth.userId;
 
   const [user, setUser] = useState(null);
   const [userFetchError, setUserFetchError] = useState(null);
   const [activeOutput, setActiveOutput] = useState("Collection");
-
-  // --- START: Modal state and functions (完全保留) ---
+  
+  // Modal state and functions (完全保留)
   const [isCreatingCollection, setIsCreatingCollection] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newCollectionName, setNewCollectionName] = useState("");
@@ -71,25 +70,19 @@ const MyMusics = () => {
   const [imagePreview, setImagePreview] = useState(null);
   const [createError, setCreateError] = useState("");
   const collectionFileInputRef = useRef(null);
-
   const [isSharingMusic, setIsSharingMusic] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
   const [newMusics, setNewMusics] = useState([]);
   const [shareError, setShareError] = useState("");
   const musicFileInputRef = useRef(null);
   const musicImageInputRefs = useRef([]);
-
   const [unifiedImageFile, setUnifiedImageFile] = useState(null);
   const [unifiedImagePreview, setUnifiedImagePreview] = useState(null);
   const unifiedImageInputRef = useRef(null);
-
   const [lastImageDetails, setLastImageDetails] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 1;
 
-  const [currentPage, setCurrentPage] = useState(1); // 这是 Modal 内的分页状态
-  const ITEMS_PER_PAGE = 1; // 这也是 Modal 内的
-  // --- END: Modal state and functions (完全保留) ---
-
-  // --- START: 分页数据状态管理 ---
   const [outputData, setOutputData] = useState({
     Collection: {
       content: [],
@@ -110,9 +103,7 @@ const MyMusics = () => {
       error: null,
     },
   });
-  // --- END: 分页数据状态管理 ---
 
-  // --- START: 数据获取 Effects ---
   useEffect(() => {
     const fetchUserData = async () => {
       try {
@@ -131,7 +122,7 @@ const MyMusics = () => {
   }, [userId]);
 
   useEffect(() => {
-    if (!user) return; // 确保用户信息加载后再获取列表数据
+    if (!user || auth.isAuthLoading) return;
 
     const activeState = outputData[activeOutput];
     const currentPageForAPI = activeState.pageInfo.number;
@@ -143,8 +134,9 @@ const MyMusics = () => {
       page: currentPageForAPI,
       size: pageSize,
       sort: "desc",
+      operateUserId: auth.userId || -1,
     };
-
+    
     switch (activeOutput) {
       case "Collection":
         url = "/api/collection/batch-by-user";
@@ -170,49 +162,45 @@ const MyMusics = () => {
         const response = await axiosClient.get(url, { params });
         const result = response.data;
         
-        if (result.code === 200 && result.data) {
+        // --- 关键修改 2: 修正API响应处理逻辑 ---
+        if (result.code === 200) {
+          const pageData = result.data;
           setOutputData((prev) => ({
             ...prev,
             [activeOutput]: {
-              content: result.data.content,
+              content: pageData?.content || [],
               pageInfo: {
-                number: result.data.number,
-                totalPages: result.data.totalPages,
-                size: result.data.size,
+                number: pageData?.number || 0,
+                totalPages: pageData?.totalPages || 1,
+                size: pageData?.size || pageSize,
               },
               isLoading: false,
-              error: null,
+              error: null, // 只要 code 是 200, error 就必须是 null
             },
           }));
         } else {
-            // 后端返回成功但数据为空的情况
-            setOutputData((prev) => ({
-                ...prev,
-                [activeOutput]: {
-                  content: [],
-                  pageInfo: { ...prev[activeOutput].pageInfo, number: 0, totalPages: 1 },
-                  isLoading: false,
-                  error: result.message || "列表为空"
-                },
-              }));
+          // 如果 code 不是 200, 这才是业务逻辑上的失败
+          throw new Error(result.message || "获取列表失败");
         }
       } catch (err) {
+        // 捕获网络错误或上面抛出的业务错误
+        const errorMessage = err.response?.data?.message || err.message || "加载数据失败";
         setOutputData((prev) => ({
           ...prev,
           [activeOutput]: {
             ...prev[activeOutput],
+            content: [],
             isLoading: false,
-            error: err.response?.data?.message || err.message || "加载数据失败",
+            error: errorMessage,
           },
         }));
       }
     };
 
     fetchDataForActiveTab();
-  }, [userId, user, activeOutput, outputData[activeOutput].pageInfo.number]);
-  // --- END: 数据获取 Effects ---
+  }, [userId, user, activeOutput, outputData[activeOutput].pageInfo.number, auth.isAuthLoading, auth.userId]);
+  
 
-  // --- START: 分页和Tab处理函数 ---
   const handlePageChange = (newPage) => {
     setOutputData((prev) => ({
       ...prev,
@@ -220,7 +208,7 @@ const MyMusics = () => {
         ...prev[activeOutput],
         pageInfo: {
           ...prev[activeOutput].pageInfo,
-          number: newPage - 1, // API需要0-based
+          number: newPage - 1,
         },
       },
     }));
@@ -229,9 +217,8 @@ const MyMusics = () => {
   const handleTabClick = (outputType) => {
     setActiveOutput(outputType);
   };
-  // --- END: 分页和Tab处理函数 ---
-
-  // --- START: Modal 相关函数 (完全保留) ---
+  
+  // --- Modal 相关函数 (完全保留, 无需修改) ---
   const resetCollectionForm = () => {
     setNewCollectionName("");
     setNewCollectionDesc("");
@@ -301,12 +288,10 @@ const MyMusics = () => {
       await axiosClient.post("/api/collection", collectionData);
       setShowCreateModal(false);
       alert("歌单创建成功！");
-      // 刷新列表
       if(activeOutput === "Collection") {
-        handlePageChange(1);
+        setOutputData(prev => ({...prev, Collection: {...prev.Collection, pageInfo: {...prev.Collection.pageInfo, number: 0}}}));
       } else {
         setActiveOutput("Collection");
-        setOutputData(prev => ({...prev, Collection: {...prev.Collection, pageInfo: {...prev.Collection.pageInfo, number: 0}}}));
       }
 
     } catch (err) {
@@ -566,12 +551,10 @@ const MyMusics = () => {
       await axiosClient.post("/api/music/batch", batchData);
       setShowShareModal(false);
       alert(`成功分享 ${batchData.length} 首音乐！`);
-      // 刷新列表
       if (activeOutput === 'Shared') {
-        handlePageChange(1);
+        setOutputData(prev => ({...prev, Shared: {...prev.Shared, pageInfo: {...prev.Shared.pageInfo, number: 0}}}));
       } else {
         setActiveOutput('Shared');
-        setOutputData(prev => ({...prev, Shared: {...prev.Shared, pageInfo: {...prev.Shared.pageInfo, number: 0}}}));
       }
 
     } catch (err) {
@@ -580,18 +563,15 @@ const MyMusics = () => {
       setIsSharingMusic(false);
     }
   };
-  // --- END: Modal 相关函数 (完全保留) ---
 
-  // --- START: Modal 分页计算 (完全保留) ---
   const indexOfLastItem = currentPage * ITEMS_PER_PAGE;
   const indexOfFirstItem = indexOfLastItem - ITEMS_PER_PAGE;
   const currentMusicItem = newMusics[indexOfFirstItem];
   const pageCount = Math.ceil(newMusics.length / ITEMS_PER_PAGE);
   const paginationItems = getPaginationItems(currentPage, pageCount);
-  // --- END: Modal 分页计算 (完全保留) ---
 
 
-  if (!user && !userFetchError) {
+  if ((!user && !userFetchError) || auth.isAuthLoading) {
     return <div className="my-musics-status">加载中...</div>;
   }
   if (userFetchError) {
@@ -600,8 +580,7 @@ const MyMusics = () => {
   if (!user) {
     return <div className="my-musics-status">未找到用户信息。</div>;
   }
-
-  // 从统一状态中获取当前活动Tab的数据
+  
   const activeData = outputData[activeOutput];
 
   return (
@@ -701,21 +680,21 @@ const MyMusics = () => {
               />
             )}
             {activeOutput === "Shared" && (
-              <MusicOutputContainer
+              // --- 关键修改 3: 使用正确的组件和 props ---
+              <MusicOutput
                 musics={activeData.content}
                 isLoading={activeData.isLoading}
                 error={activeData.error}
-                musicKey="Shared"
-                keyValue={userId}
+                musicKey="Shared" // 传递 musicKey 以便 MusicOutput 内部渲染正确的列表
+                title="分享的音乐"
                 width="850px"
               />
             )}
           </div>
 
-          {/* --- 全局分页控件 --- */}
           {!activeData.isLoading && activeData.content && activeData.content.length > 0 && (
             <Pagination
-              currentPage={activeData.pageInfo.number + 1} // UI显示1-based
+              currentPage={activeData.pageInfo.number + 1}
               totalPages={activeData.pageInfo.totalPages}
               onPageChange={handlePageChange}
             />
@@ -724,7 +703,7 @@ const MyMusics = () => {
         </div>
       </div>
 
-      {/* --- 所有 Modal 弹窗保持不变 --- */}
+      {/* Modal 弹窗保持不变 */}
       <EditModal
         show={showCreateModal}
         onClose={() => setShowCreateModal(false)}

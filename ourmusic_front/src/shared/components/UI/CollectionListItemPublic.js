@@ -19,9 +19,10 @@ const CollectionListItemPublic = (props) => {
   const auth = useContext(AuthContext);
   const isOwner = auth.userId && collection.user?.userId === auth.userId;
 
-  const [isLiked, setIsLiked] = useState(false);
-  const [isDisliked, setIsDisliked] = useState(false);
-  const [isCollected, setIsCollected] = useState(false);
+  // --- 关键修改: 使用API返回的状态来初始化 ---
+  const [isLiked, setIsLiked] = useState(collection.operateUserLikedOrNot);
+  const [isDisliked, setIsDisliked] = useState(collection.operateUserDislikedOrNot);
+  const [isCollected, setIsCollected] = useState(collection.operateUserCollectedOrNot);
 
   const [likeCount, setLikeCount] = useState(
     collection.collectionLikedCount || 0
@@ -71,8 +72,13 @@ const CollectionListItemPublic = (props) => {
           setIsLiked(true);
           setLikeCount((prev) => prev + 1);
           if (isDisliked) {
-            handleDislikeClick();
-            setIsDisliked(false);
+            // 如果之前是点踩状态，取消点踩
+             axiosClient
+            .post(`/api/data-stats/dislike/COLLECTION/${collection.collectionId}/user/${auth.userId}`)
+            .then(() => {
+                setIsDisliked(false);
+                setDislikeCount(prev => prev -1);
+            });
           }
         } else if (response.data.message === "取消点赞成功") {
           setIsLiked(false);
@@ -99,8 +105,13 @@ const CollectionListItemPublic = (props) => {
           setIsDisliked(true);
           setDislikeCount((prev) => prev + 1);
           if (isLiked) {
-            handleLikeClick();
-            setIsLiked(false);
+             // 如果之前是点赞状态，取消点赞
+            axiosClient
+            .post(`/api/data-stats/like/COLLECTION/${collection.collectionId}/user/${auth.userId}`)
+            .then(() => {
+                setIsLiked(false);
+                setLikeCount(prev => prev -1);
+            });
           }
         } else if (response.data.message === "取消点踩成功") {
           setIsDisliked(false);
@@ -116,17 +127,16 @@ const CollectionListItemPublic = (props) => {
       alert("不能收藏自己的歌单哦！");
       return;
     }
+    // 假设是收藏到用户的默认收藏夹
     axiosClient
       .put(
-        `/api/data-stats/collect/COLLECTION/${collection.collectionId}/user/${
-          auth.userId
-        }/to-collection/${0}`
+        `/api/data-stats/collect/COLLECTION/${collection.collectionId}/user/${auth.userId}/default`
       )
       .then((response) => {
-        if (response.data.message === "歌单收藏成功") {
+        if (response.data.message === "歌单加入默认收藏成功") {
           setIsCollected(true);
           setCollectCount((prev) => prev + 1);
-        } else if (response.data.message === "歌单取消收藏成功") {
+        } else if (response.data.message === "歌单取消加入默认收藏成功") {
           setIsCollected(false);
           setCollectCount((prev) => prev - 1);
         }
@@ -206,6 +216,7 @@ const CollectionListItemPublic = (props) => {
       await axiosClient.put("/api/collection", updatedData);
       setShowEditModal(false);
       alert("歌单更新成功！");
+      window.location.reload(); // 简单起见，直接刷新页面
     } catch (err) {
       setEditError(
         err.response?.data?.message || err.message || "更新歌单失败"
@@ -220,12 +231,14 @@ const CollectionListItemPublic = (props) => {
     event.preventDefault();
     if (onPlayAll && collection.musics && collection.musics.length > 0) {
       onPlayAll(collection.musics);
+    } else if (onPlayAll) {
+      onPlayAll();
     }
   };
 
   const handleDeleteConfirm = () => {
     axiosClient
-      .delete(`/api/collection/${collection.collectionId}`)
+      .delete(`/api/collection/${collection.collectionId}/user/${auth.userId}`)
       .then(() => {
         setShowDeleteModal(false);
         window.location.reload();
@@ -244,9 +257,11 @@ const CollectionListItemPublic = (props) => {
         setIsMenuOpen(false);
       }
     };
-    document.addEventListener("mousedown", handleClickOutside);
+    if (isMenuOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  }, [isMenuOpen]);
 
   const DropdownMenu = () => {
     const rect = triggerRef.current?.getBoundingClientRect();

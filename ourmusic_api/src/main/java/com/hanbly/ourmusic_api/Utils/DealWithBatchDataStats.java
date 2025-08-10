@@ -54,7 +54,7 @@ public class DealWithBatchDataStats {
         Map<Integer, Long> dislikeCounts = dislikeDao.findDislikeCountsForIdsGroupedById(Dislike.OwnerType.MUSIC, musicListIds)
                 .stream()
                 .collect(Collectors.toMap(CountDto::getId, CountDto::getCount));
-        Map<Integer, Long> collectCounts = collectStatsDao.findCollectStatsCountsForIdsGroupedById(CollectStats.OwnerType.MUSIC, musicListIds)
+        Map<Integer, Long> collectCounts = collectStatsDao.findCollectStatsCountsForIdsGroupedByIdButNotHistory(CollectStats.OwnerType.MUSIC, musicListIds, "历史记录")
                 .stream()
                 .collect(Collectors.toMap(CountDto::getId, CountDto::getCount));
         Map<Integer, Long> shareCounts = shareDao.findShareCountsForIdsGroupedById(Share.OwnerType.MUSIC, musicListIds)

@@ -45,9 +45,9 @@ public class MusicController {
 
 
     @PreAuthorize(value = "hasRole('user') or hasRole('admin')")
-    @GetMapping("/{musicId}")        // URL: localhost:8080/api/music/{musicId}  method: GET
-    public ResponseMessage<MusicDtoDetail> getMusic(@PathVariable Integer musicId) {
-        MusicDtoDetail music = musicService.getMusicByMusicId(musicId);
+    @GetMapping("/{musicId}")        // URL: localhost:8080/api/music/{musicId}?operateUserId=...  method: GET
+    public ResponseMessage<MusicDtoDetail> getMusic(@PathVariable Integer musicId, @RequestParam(required = false) Integer operateUserId) {
+        MusicDtoDetail music = musicService.getMusicByMusicId(musicId, operateUserId);
         return ResponseMessage.success(music);
     }
 
@@ -55,8 +55,9 @@ public class MusicController {
     @GetMapping("/batch-by-user")        // URL: localhost:8080/api/music/batch-by-user?userId=...  method: GET
     public ResponseMessage<Page<MusicDto>> getMusicByUser(
             @RequestParam Integer userId,
+            @RequestParam Integer operateUserId,
             @PageableDefault(size = 4) Pageable pageable) {
-        Page<MusicDto> musicList = musicService.findMusicByUserId(userId, pageable);
+        Page<MusicDto> musicList = musicService.findMusicByUserId(userId,operateUserId, pageable);
         if(musicList == null || musicList.isEmpty()){
             return ResponseMessage.success("音乐列表为空", null);
         }
@@ -64,13 +65,15 @@ public class MusicController {
     }
 
     /**
-     * 根据多种可选条件分页查询音乐列表
-     * @param musicGenre       流派ID (可选)
-     * @param musicName      音乐名称 (可选)
-     * @param musicArtist 艺术家名称 (可选)
-     * @param musicAlbum  专辑名称 (可选)
-     * @param musicYear   发行年份 (可选)
-     * @return              筛选后的音乐信息
+     * @param musicGenre 音乐流派
+     * @param musicName 音乐名称
+     * @param musicArtist 音乐艺术家
+     * @param musicAlbum 音乐专辑
+     * @param musicYear 音乐年份
+     * @param mode 检索模式
+     * @param operateUserId 操作用户id
+     * @param pageable 分页信息
+     * @return 检索结果
      */
     @GetMapping("/batch")     // URL: localhost:8080/api/music/batch?musicGenre=...&musicName=...&musicArtist=...&musicAlbum=...&musicYear=...&mode=...  method:GET
     public ResponseMessage<Page<MusicDto>> findMusicBySomething(
@@ -80,9 +83,10 @@ public class MusicController {
             @RequestParam(required = false) String musicAlbum,
             @RequestParam(required = false) String musicYear,
             @RequestParam(required = true) String mode,
+            @RequestParam(required = false) Integer operateUserId,
             @PageableDefault(size = 20, direction = Sort.Direction.DESC) Pageable pageable) {
 
-        Page<MusicDto> musicList = musicService.findMusicBySomething(musicGenre, musicName, musicArtist, musicAlbum, musicYear, mode, pageable);
+        Page<MusicDto> musicList = musicService.findMusicBySomething(musicGenre, musicName, musicArtist, musicAlbum, musicYear, mode, operateUserId, pageable);
         if(musicList == null || musicList.isEmpty()){
             return ResponseMessage.success("音乐列表为空", null);
         }

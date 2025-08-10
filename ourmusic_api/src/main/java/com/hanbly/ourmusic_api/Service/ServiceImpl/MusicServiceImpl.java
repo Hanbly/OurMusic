@@ -129,12 +129,24 @@ public class MusicServiceImpl implements MusicService {
     }
 
     @Override
-    public MusicDtoDetail getMusicByMusicId(Integer musicId) {
+    public MusicDtoDetail getMusicByMusicId(Integer musicId, Integer operateUserId) {
         Music musicPojo = musicDao.findById(musicId).orElseThrow(() -> new IllegalArgumentException("无法查询该音乐"));
 
         List<CommentDto> finalCommentsDto = dealWithBatchDataStats.getCommentsForOwner(Comment.OwnerType.MUSIC, musicId);
 
         MusicDtoDetail resultDto = transformMusicEntityToDetailDto(musicPojo, finalCommentsDto);
+
+        // 额外添加，根据当前用户id进行统计数据的状态判断
+        if(operateUserId == null){
+            resultDto.setOperateUserLikedOrNot(false);
+            resultDto.setOperateUserDislikedOrNot(false);
+            resultDto.setOperateUserCollectedOrNot(false);
+        }else{
+            User user = userDao.findById(operateUserId).orElseThrow(() -> new EntityNotFoundException("无法查询用户"));
+            resultDto.setOperateUserLikedOrNot(likeDao.existsByLikeOwnerTypeAndLikeOwnerIdAndLikedByUser_UserId(Like.OwnerType.MUSIC, resultDto.getMusicId(), operateUserId));
+            resultDto.setOperateUserDislikedOrNot(dislikeDao.existsByDislikeOwnerTypeAndDislikeOwnerIdAndDislikedByUser_UserId(Dislike.OwnerType.MUSIC, resultDto.getMusicId(), operateUserId));
+            resultDto.setOperateUserCollectedOrNot(collectStatsDao.existsByCollectStatsOwnerTypeAndCollectStatsOwnerIdAndCollectStatsdByUser_UserIdAndCollectStatsToCollection_CollectionNameNot(CollectStats.OwnerType.MUSIC, resultDto.getMusicId(), operateUserId, "历史记录"));
+        }
 
         resultDto.setMusicLikedCount(likeDao.countAllByLikeOwnerTypeAndLikeOwnerId(Like.OwnerType.MUSIC, musicId));
         resultDto.setMusicDislikedCount(dislikeDao.countAllByDislikeOwnerTypeAndDislikeOwnerId(Dislike.OwnerType.MUSIC, musicId));
@@ -159,11 +171,26 @@ public class MusicServiceImpl implements MusicService {
     }
 
     @Override
-    public Page<MusicDto> findMusicByUserId(Integer userId, Pageable pageable) {
+    public Page<MusicDto> findMusicByUserId(Integer userId, Integer operateUserId, Pageable pageable) {
         Page<Music> musicPage = musicDao.findAllByUser_UserIdOrderByMusicFile_UploadTimestampDesc(userId, pageable);
 
         List<Music> musicsOnThisPage = musicPage.getContent();
         List<MusicDto> musicDtosOnThisPage = dealWithBatchDataStats.dealWithMusicListToResultDto(musicsOnThisPage);
+        // 额外添加，根据当前用户id进行统计数据的状态判断
+        if(operateUserId == null){
+            musicDtosOnThisPage.forEach(pc -> {
+                pc.setOperateUserLikedOrNot(false);
+                pc.setOperateUserDislikedOrNot(false);
+                pc.setOperateUserCollectedOrNot(false);
+            });
+        }else{
+            User user = userDao.findById(operateUserId).orElseThrow(() -> new EntityNotFoundException("无法查询用户"));
+            musicDtosOnThisPage.forEach(pc -> {
+                pc.setOperateUserLikedOrNot(likeDao.existsByLikeOwnerTypeAndLikeOwnerIdAndLikedByUser_UserId(Like.OwnerType.MUSIC, pc.getMusicId(), operateUserId));
+                pc.setOperateUserDislikedOrNot(dislikeDao.existsByDislikeOwnerTypeAndDislikeOwnerIdAndDislikedByUser_UserId(Dislike.OwnerType.MUSIC, pc.getMusicId(), operateUserId));
+                pc.setOperateUserCollectedOrNot(collectStatsDao.existsByCollectStatsOwnerTypeAndCollectStatsOwnerIdAndCollectStatsdByUser_UserIdAndCollectStatsToCollection_CollectionNameNot(CollectStats.OwnerType.MUSIC, pc.getMusicId(), operateUserId, "历史记录"));
+            });
+        }
         return new PageImpl<>(musicDtosOnThisPage, pageable, musicPage.getTotalElements());
     }
 
@@ -178,7 +205,7 @@ public class MusicServiceImpl implements MusicService {
     private final Double DOWNLOAD_COUNT_WEIGHT = 0.1;
 
     @Override
-    public Page<MusicDto> findMusicBySomething(String genre, String musicName, String musicArtist, String musicAlbum, String musicYear, String mode, Pageable pageable) {
+    public Page<MusicDto> findMusicBySomething(String genre, String musicName, String musicArtist, String musicAlbum, String musicYear, String mode, Integer operateUserId, Pageable pageable) {
 
 //        List<Music> musics = musicDao.findCandidatesByCriteria(genre, musicName, musicArtist, musicAlbum, musicYear);
         List<Music> musics = musicDao.findAll();
@@ -265,6 +292,22 @@ public class MusicServiceImpl implements MusicService {
 
         // 5. 从总列表(resultDto)中手动截取出当前页的数据
         List<MusicDto> pageContent = resultDto.subList(startItem, endItem);
+
+        // 额外添加，根据当前用户id进行统计数据的状态判断
+        if(operateUserId == null){
+            pageContent.forEach(pc -> {
+                pc.setOperateUserLikedOrNot(false);
+                pc.setOperateUserDislikedOrNot(false);
+                pc.setOperateUserCollectedOrNot(false);
+            });
+        }else{
+            User user = userDao.findById(operateUserId).orElseThrow(() -> new EntityNotFoundException("无法查询用户"));
+            pageContent.forEach(pc -> {
+                pc.setOperateUserLikedOrNot(likeDao.existsByLikeOwnerTypeAndLikeOwnerIdAndLikedByUser_UserId(Like.OwnerType.MUSIC, pc.getMusicId(), operateUserId));
+                pc.setOperateUserDislikedOrNot(dislikeDao.existsByDislikeOwnerTypeAndDislikeOwnerIdAndDislikedByUser_UserId(Dislike.OwnerType.MUSIC, pc.getMusicId(), operateUserId));
+                pc.setOperateUserCollectedOrNot(collectStatsDao.existsByCollectStatsOwnerTypeAndCollectStatsOwnerIdAndCollectStatsdByUser_UserIdAndCollectStatsToCollection_CollectionNameNot(CollectStats.OwnerType.MUSIC, pc.getMusicId(), operateUserId, "历史记录"));
+            });
+        }
 
         // 6. 使用 PageImpl 构建并返回 Page 对象
         //    构造函数需要：

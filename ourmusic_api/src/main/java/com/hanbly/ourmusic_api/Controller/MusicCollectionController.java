@@ -36,9 +36,9 @@ public class MusicCollectionController {
     }
 
     @PreAuthorize(value = "hasRole('user') or hasRole('admin')")
-    @GetMapping("/{collectionId}")     // URL: localhost:8080/api/collection/{collectionId}  method: GET
-    public ResponseMessage<MusicCollectionDtoDetail> getCollection(@PathVariable Integer collectionId, @PageableDefault(size = 10) Pageable musicPageable) {
-        MusicCollectionDtoDetail musicCollectionDetailDto = musicCollectionService.getCollectionByCollectionId(collectionId, musicPageable);
+    @GetMapping("/{collectionId}")     // URL: localhost:8080/api/collection/{collectionId}?operateUserId=...  method: GET
+    public ResponseMessage<MusicCollectionDtoDetail> getCollection(@PathVariable Integer collectionId, @RequestParam Integer operateUserId, @PageableDefault(size = 10) Pageable musicPageable) {
+        MusicCollectionDtoDetail musicCollectionDetailDto = musicCollectionService.getCollectionByCollectionId(collectionId, operateUserId, musicPageable);
         musicCollectionDetailDto.getUser().setPassword(null);
         return ResponseMessage.success(musicCollectionDetailDto);
     }
@@ -56,8 +56,10 @@ public class MusicCollectionController {
     public ResponseMessage<Page<MusicCollectionDto>> getCollectionByUser(
             @RequestParam Integer userId,
             @RequestParam String searchState,
+            @RequestParam Integer operateUserId,
+            @RequestParam(required = false) Integer musicId,
             @PageableDefault(size = 5, direction = Sort.Direction.DESC) Pageable pageable) {
-        Page<MusicCollectionDto> collectionList = musicCollectionService.getCollectionByUserId(userId, searchState, pageable);
+        Page<MusicCollectionDto> collectionList = musicCollectionService.getCollectionByUserId(userId, searchState, operateUserId, musicId, pageable);
         if (collectionList == null || collectionList.isEmpty()) {
             return ResponseMessage.success("歌单列表为空", null);
         }
@@ -86,8 +88,9 @@ public class MusicCollectionController {
             @RequestParam(required = false) String collectionName,
             @RequestParam(required = false) String collectionGenre,
             @RequestParam(required = true) String mode,
+            @RequestParam(required = false) Integer operateUserId,
             @PageableDefault(size = 10, direction = Sort.Direction.DESC) Pageable pageable) {
-        Page<MusicCollectionDto> collections = musicCollectionService.getCollectionBySomething(userId, collectionName, collectionGenre, mode, pageable);
+        Page<MusicCollectionDto> collections = musicCollectionService.getCollectionBySomething(userId, collectionName, collectionGenre, mode, operateUserId, pageable);
         if (collections == null || collections.isEmpty()) {
             return ResponseMessage.success("歌单列表为空", null);
         }

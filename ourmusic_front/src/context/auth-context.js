@@ -8,8 +8,8 @@ export const AuthContext = createContext({
   userRoles: null,
   accessToken: null,
   refreshToken: null,
-  // login: (uid, uname, uimage, uroles, acToken, reToken) => {},
-  login: (userData) => {}, 
+  isAuthLoading: true, // 新增：默认认证状态为加载中
+  login: (userData) => {},
   logout: () => {},
   updateUserData: (newData) => {},
   isLoginModalOpen: false,
@@ -25,25 +25,22 @@ export const AuthProvider = (props) => {
   const [userImage, setUserImage] = useState(null);
   const [userRoles, setUserRoles] = useState(null);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [isAuthLoading, setIsAuthLoading] = useState(true); // 新增：认证加载状态
 
   const openLoginModal = useCallback(() => setIsLoginModalOpen(true), []);
   const closeLoginModal = useCallback(() => setIsLoginModalOpen(false), []);
 
-  // ---【修改点 1】--- login 函数接收一个对象
   const login = useCallback((userData) => {
-    console.log("Login function called with userData:", userData);
-    // 使用解构赋值，不再关心参数顺序
     const {
       userId,
       userName,
-      userImageFileUrl, // 从登录API获取
-      userImage,      // 从 localStorage 获取
+      userImageFileUrl,
+      userImage,
       userRoles,
       accessToken,
       refreshToken,
     } = userData;
 
-    // 如果是登录时，图片URL在 userImageFileUrl；如果是从 localStorage 恢复，在 userImage
     const finalUserImage = userImageFileUrl || userImage;
 
     setAccessToken(accessToken);
@@ -52,13 +49,13 @@ export const AuthProvider = (props) => {
     setUserName(userName);
     setUserImage(finalUserImage);
     setUserRoles(userRoles);
-    
+
     localStorage.setItem(
       "userData",
       JSON.stringify({
         userId: userId,
         userName: userName,
-        userImage: finalUserImage, // 统一保存为 userImage
+        userImage: finalUserImage,
         userRoles: userRoles,
         accessToken: accessToken,
         refreshToken: refreshToken,
@@ -96,8 +93,10 @@ export const AuthProvider = (props) => {
     if (storedDataString) {
       try {
         const storedData = JSON.parse(storedDataString);
-        if (storedData.reTimeout && storedData.reTimeout > new Date().getTime()) {
-          // ---【修改点 2】--- 调用 login 时传递整个对象
+        if (
+          storedData.reTimeout &&
+          storedData.reTimeout > new Date().getTime()
+        ) {
           login(storedData);
         } else {
           logout();
@@ -106,6 +105,8 @@ export const AuthProvider = (props) => {
         logout();
       }
     }
+    // 关键修改：无论如何，在初次检查后，认证加载过程都结束了
+    setIsAuthLoading(false);
   }, [login, logout]);
 
   const contextValue = {
@@ -116,6 +117,7 @@ export const AuthProvider = (props) => {
     userName: userName,
     userImage: userImage,
     userRoles: userRoles,
+    isAuthLoading: isAuthLoading, // 新增：将加载状态提供给 context
     login: login,
     logout: logout,
     updateUserData: updateUserData,

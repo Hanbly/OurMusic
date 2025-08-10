@@ -33,6 +33,10 @@ public class MusicCollectionDtoDetail {
 
     private UserDto user;
 
+    private Boolean operateUserCollectedOrNot;
+    private Boolean operateUserLikedOrNot;
+    private Boolean operateUserDislikedOrNot;
+
     private List<MusicDto> musics;
 
     private int totalPages;      // 总页数
@@ -156,6 +160,30 @@ public class MusicCollectionDtoDetail {
 
     public void setUser(UserDto user) {
         this.user = user;
+    }
+
+    public Boolean getOperateUserCollectedOrNot() {
+        return operateUserCollectedOrNot;
+    }
+
+    public void setOperateUserCollectedOrNot(Boolean operateUserCollectedOrNot) {
+        this.operateUserCollectedOrNot = operateUserCollectedOrNot;
+    }
+
+    public Boolean getOperateUserLikedOrNot() {
+        return operateUserLikedOrNot;
+    }
+
+    public void setOperateUserLikedOrNot(Boolean operateUserLikedOrNot) {
+        this.operateUserLikedOrNot = operateUserLikedOrNot;
+    }
+
+    public Boolean getOperateUserDislikedOrNot() {
+        return operateUserDislikedOrNot;
+    }
+
+    public void setOperateUserDislikedOrNot(Boolean operateUserDislikedOrNot) {
+        this.operateUserDislikedOrNot = operateUserDislikedOrNot;
     }
 
     public List<MusicDto> getMusics() {

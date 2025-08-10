@@ -1,79 +1,111 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 
 import EditModal from "./EditModal";
 import CollectionSelector from "../../../collects/components/CollectionSelector";
 import axiosClient from "../../../api-config";
 
-/**
- * 一个封装了收藏逻辑的模态框组件
- * @param {object} props
- * @param {boolean} props.show - 是否显示模态框
- * @param {function} props.onClose - 关闭模态框的回调函数
- * @param {object} props.music - 需要被收藏的歌曲对象
- * @param {string} props.userId - 当前登录用户的ID
- * @param {function} props.onSuccess - 收藏成功后的回调函数
- */
-const CollectionModal = ({ show, onClose, music, userId, onSuccess }) => {
-  const [selectedCollectId, setSelectedCollectId] = useState(null);
+const CollectModal = ({ show, onClose, music, userId, onSuccess }) => {
+  const initialCollectionsState = useRef([]);
+  const [currentCollections, setCurrentCollections] = useState([]);
+  
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // 当模态框关闭时，重置内部状态
   const handleClose = () => {
-    setSelectedCollectId(null);
+    initialCollectionsState.current = [];
+    setCurrentCollections([]);
     setError("");
     setIsSubmitting(false);
     onClose();
   };
 
-  const handleSubmit = (event) => {
-    event.preventDefault();
-    if (!selectedCollectId) {
-      setError("请先选择一个歌单！");
-      return;
+  const handleSelectionChange = (collections) => {
+    if (initialCollectionsState.current.length === 0) {
+      initialCollectionsState.current = collections;
     }
+    setCurrentCollections(collections);
+  };
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
     setIsSubmitting(true);
     setError("");
 
-    axiosClient
-      .put(`/api/data-stats/collect/MUSIC/${music.musicId}/user/${userId}/to-collection/${selectedCollectId}`)      
-      .then((response) => {
-        // 调用父组件传入的成功回调，通知父组件更新UI
-        if (onSuccess) {
-          onSuccess(response.data); 
+    // 找出状态发生变化的歌单 (使用 find 确保匹配正确)
+    const collectionsToUpdate = currentCollections.filter((current) => {
+        const initial = initialCollectionsState.current.find(c => c.id === current.id);
+        return initial && current.isCollected !== initial.isCollected;
+    });
+
+    if (collectionsToUpdate.length === 0) {
+        handleClose(); // 没有变化，直接关闭
+        return;
+    }
+
+    // --- 关键修改 1: 将变更分类 ---
+    const collectionsToAdd = collectionsToUpdate.filter(c => c.isCollected);
+    const collectionsToRemove = collectionsToUpdate.filter(c => !c.isCollected);
+    
+    const promises = collectionsToUpdate.map(collection => {
+        if (collection.isCollected) {
+            // 添加收藏 API
+            return axiosClient.put(`/api/data-stats/collect/MUSIC/${music.musicId}/user/${userId}/to-collection/${collection.id}`);
+        } else {
+            // 删除收藏 API
+            return axiosClient.put(`/api/data-stats/d-collect/MUSIC/${music.musicId}/user/${userId}/out-collection/${collection.id}`);
         }
-        handleClose(); // 关闭模态框
-      })
-      .catch((err) => {
-        setError(err.response?.data?.message || "收藏失败，请稍后再试");
-      })
-      .finally(() => {
+    });
+
+    try {
+        await Promise.all(promises);
+        
+        // --- 关键修改 2: 构建动态的、更智能的成功提示 ---
+        let successMessage = "";
+        if (collectionsToAdd.length > 0 && collectionsToRemove.length > 0) {
+            successMessage = "收藏状态更新成功！";
+        } else if (collectionsToAdd.length > 0) {
+            successMessage = `成功将歌曲《${music.musicName}》收藏到 ${collectionsToAdd.length} 个歌单！`;
+        } else if (collectionsToRemove.length > 0) {
+            successMessage = `成功从 ${collectionsToRemove.length} 个歌单中移出歌曲《${music.musicName}》！`;
+        }
+
+        if (successMessage) {
+            alert(successMessage);
+        }
+        
+        if (onSuccess) {
+            onSuccess(); // 通知父组件成功了，父组件可以刷新收藏数等
+        }
+        handleClose();
+    } catch (err) {
+        setError(err.response?.data?.message || "更新收藏失败，请稍后再试");
+    } finally {
         setIsSubmitting(false);
-      });
+    }
   };
 
   return (
     <EditModal
       show={show}
       onClose={handleClose}
-      title={`收藏歌曲《${music.musicName}》`}
+      title={`管理歌曲《${music.musicName}》的收藏`}
     >
       <form onSubmit={handleSubmit}>
         <div className="form-group">
-          <label>选择歌单</label>
+          <label>选择要收藏到的歌单</label>
           <CollectionSelector
             userId={userId}
-            onCollectionSelect={(id) => setSelectedCollectId(id)}
-            selectedCollectionId={selectedCollectId}
+            musicId={music.musicId}
+            onSelectionChange={handleSelectionChange}
           />
         </div>
         {error && <p className="form-error">{error}</p>}
         <button type="submit" className="form-button" disabled={isSubmitting}>
-          {isSubmitting ? "收藏中..." : "确认收藏"}
+          {isSubmitting ? "正在保存..." : "完成"}
         </button>
       </form>
     </EditModal>
   );
 };
 
-export default CollectionModal;
+export default CollectModal;

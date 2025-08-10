@@ -25,9 +25,11 @@ const MusicListItemPublicLongVer = (props) => {
   const isThisTrackPlaying =
     currentTrack?.musicId === music.musicId && isPlaying;
 
-  const [isLiked, setIsLiked] = useState(false);
-  const [isDisliked, setIsDisliked] = useState(false);
-  const [isCollected, setIsCollected] = useState(false);
+  // --- 关键修改：设置正确的默认状态 ---
+  const [isLiked, setIsLiked] = useState(music.operateUserLikedOrNot);
+  const [isDisliked, setIsDisliked] = useState(music.operateUserDislikedOrNot);
+  const [isCollected, setIsCollected] = useState(music.operateUserCollectedOrNot);
+  
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef(null);
   const triggerRef = useRef(null);

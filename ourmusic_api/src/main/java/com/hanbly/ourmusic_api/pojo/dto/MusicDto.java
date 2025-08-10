@@ -52,6 +52,10 @@ public class MusicDto {
 
     private Integer userId;
 
+    private Boolean operateUserCollectedOrNot;
+    private Boolean operateUserLikedOrNot;
+    private Boolean operateUserDislikedOrNot;
+
 
     public MusicDto() {
     }
@@ -215,5 +219,29 @@ public class MusicDto {
 
     public void setUserId(Integer userId) {
         this.userId = userId;
+    }
+
+    public Boolean getOperateUserCollectedOrNot() {
+        return operateUserCollectedOrNot;
+    }
+
+    public void setOperateUserCollectedOrNot(Boolean operateUserCollectedOrNot) {
+        this.operateUserCollectedOrNot = operateUserCollectedOrNot;
+    }
+
+    public Boolean getOperateUserLikedOrNot() {
+        return operateUserLikedOrNot;
+    }
+
+    public void setOperateUserLikedOrNot(Boolean operateUserLikedOrNot) {
+        this.operateUserLikedOrNot = operateUserLikedOrNot;
+    }
+
+    public Boolean getOperateUserDislikedOrNot() {
+        return operateUserDislikedOrNot;
+    }
+
+    public void setOperateUserDislikedOrNot(Boolean operateUserDislikedOrNot) {
+        this.operateUserDislikedOrNot = operateUserDislikedOrNot;
     }
 }

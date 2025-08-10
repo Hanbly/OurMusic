@@ -25,4 +25,6 @@ public interface DislikeDao extends JpaRepository<Dislike, Integer>, JpaSpecific
 
     Dislike findByDislikeOwnerTypeAndDislikeOwnerIdAndDislikedByUser_UserId(Dislike.OwnerType dislikeOwnerType, Integer dislikeOwnerId, Integer dislikedByUserId);
 
+    Boolean existsByDislikeOwnerTypeAndDislikeOwnerIdAndDislikedByUser_UserId(Dislike.OwnerType dislikeOwnerType, Integer dislikeOwnerId, Integer dislikedByUserId);
+
 }
