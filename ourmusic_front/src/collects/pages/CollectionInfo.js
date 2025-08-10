@@ -20,12 +20,12 @@ const CollectionInfo = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
-  
+
   const auth = useContext(AuthContext);
-  const { 
-    playTrack, 
-    currentTrack, 
-    isPlaying, 
+  const {
+    playTrack,
+    currentTrack,
+    isPlaying,
     togglePlayPause,
     playlist
   } = useAudio();
@@ -35,7 +35,11 @@ const CollectionInfo = () => {
   const [commentError, setCommentError] = useState("");
   const textareaRef = useRef(null);
 
-  const isCurrentCollectionPlaying = 
+  const [isManaging, setIsManaging] = useState(false);
+  const [selectedMusicIds, setSelectedMusicIds] = useState([]);
+  const [isRemoving, setIsRemoving] = useState(false);
+
+  const isCurrentCollectionPlaying =
     playlist.length > 0 &&
     musics.length > 0 &&
     playlist[0].musicId === musics[0].musicId;
@@ -48,7 +52,7 @@ const CollectionInfo = () => {
         const response = await axiosClient.get(`/api/collection/${collectionId}`, {
           params: {
             page: currentPage - 1,
-            size: 15 
+            size: 15
           }
         });
         const result = response.data;
@@ -70,7 +74,14 @@ const CollectionInfo = () => {
     };
 
     fetchCollectionDetails();
+
   }, [collectionId, currentPage]);
+
+  useEffect(() => {
+    if (!isManaging) {
+      setSelectedMusicIds([]);
+    }
+  }, [isManaging]);
 
   const handlePageChange = (newPage) => {
     setCurrentPage(newPage);
@@ -85,7 +96,7 @@ const CollectionInfo = () => {
       }
     }
   };
-  
+
   const handlePlaySingle = (music) => {
     playTrack(music, musics, auth.userId);
   }
@@ -94,7 +105,7 @@ const CollectionInfo = () => {
     e.preventDefault();
     if (!commentText.trim()) return setCommentError("评论内容不能为空");
     if (!auth.userId) return auth.openLoginModal();
-    
+
     setIsSubmitting(true);
     setCommentError("");
     try {
@@ -145,12 +156,59 @@ const CollectionInfo = () => {
     };
     setComments((prevComments) => simplifiedAddReply(prevComments));
   };
-  
+
+  const handleToggleManageMode = () => {
+    setIsManaging(prev => !prev);
+  };
+
+  const handleSelectMusic = (musicId) => {
+    setSelectedMusicIds(prevSelected =>
+      prevSelected.includes(musicId)
+        ? prevSelected.filter(id => id !== musicId)
+        : [...prevSelected, musicId]
+    );
+  };
+
+  const handleRemoveSelected = async () => {
+    if (selectedMusicIds.length === 0 || !auth.userId || isRemoving) return;
+    
+    setIsRemoving(true);
+    setError(null);
+
+    try {
+      const removalPromises = selectedMusicIds.map(musicId => {
+        return axiosClient.put(`/api/data-stats/d-collect/MUSIC/${musicId}/user/${auth.userId}/out-collection/${collectionId}`);
+      });
+      
+      const results = await Promise.allSettled(removalPromises);
+
+      const failedRemovals = results.filter(result => result.status === 'rejected' || result.value.data.code !== 200);
+
+      if (failedRemovals.length > 0) {
+        throw new Error('部分或全部歌曲移出失败');
+      }
+
+      setMusics(prevMusics => prevMusics.filter(music => !selectedMusicIds.includes(music.musicId)));
+      setCollectionData(prevData => ({
+        ...prevData,
+        collectionMusicsNumber: prevData.collectionMusicsNumber - selectedMusicIds.length
+      }));
+      
+      setIsManaging(false);
+      setSelectedMusicIds([]);
+
+    } catch (err) {
+      setError(err.message || '移出歌曲时发生未知错误，请稍后重试。');
+    } finally {
+      setIsRemoving(false);
+    }
+  };
+
   if (isLoading && !collectionData) {
     return <div className="page-status">正在加载歌单...</div>;
   }
 
-  if (error) {
+  if (error && !collectionData) {
     return <div className="page-status error">错误: {error}</div>;
   }
 
@@ -159,51 +217,79 @@ const CollectionInfo = () => {
   }
 
   return (
-    <div className="collection-info-page">
-      <header className="collection-info-header">
-        <div className="header__image-container" onClick={handlePlayAll}>
-          <img src={collectionData.collectionImageFileUrl} alt={collectionData.collectionName} />
-          <div className="play-overlay">
-            {isCurrentCollectionPlaying && isPlaying ? <FaPause /> : <FaPlay />}
-          </div>
-        </div>
-        <div className="header__details">
-          <span className="header__tag">歌单</span>
-          <h1 className="header__title">{collectionData.collectionName}</h1>
-          <p className="header__description">{collectionData.collectionDescription || '暂无描述'}</p>
-          <div className="header__meta">
-            <Link to={`/${collectionData.user.userId}/myMusics`} className="header__user">
-              <img src={collectionData.user.userAvatarFileUrl} alt={collectionData.user.userNickName ? collectionData.user.userNickName : collectionData.user.userName} className="user__avatar" />
-              <span>{collectionData.user.userNickName ? collectionData.user.userNickName : collectionData.user.userName}</span>
-            </Link>
-            <span className="meta__song-count">{collectionData.collectionMusicsNumber} 首音乐</span>
-          </div>
-          <div className="header__actions">
-            <button className="action-button play-all" onClick={handlePlayAll}>
+    <div className="collection-info-page collection-detail-view">
+      {/* ===== 结构变更：左侧主内容区 ===== */}
+      <div className="collection-main-content">
+        <header className="collection-info-header">
+          <div className="header__image-container" onClick={handlePlayAll}>
+            <img src={collectionData.collectionImageFileUrl} alt={collectionData.collectionName} />
+            <div className="play-overlay">
               {isCurrentCollectionPlaying && isPlaying ? <FaPause /> : <FaPlay />}
-              {isCurrentCollectionPlaying && isPlaying ? '暂停播放' : '播放全部'}
-            </button>
+            </div>
           </div>
-        </div>
-      </header>
+          <div className="header__details">
+            <span className="header__tag">歌单</span>
+            <h1 className="header__title">{collectionData.collectionName}</h1>
+            <p className="header__description">{collectionData.collectionDescription || '暂无描述'}</p>
+            <div className="header__meta">
+              <Link to={`/${collectionData.user.userId}/myMusics`} className="header__user">
+                <img src={collectionData.user.userAvatarFileUrl} alt={collectionData.user.userNickName ? collectionData.user.userNickName : collectionData.user.userName} className="user__avatar" />
+                <span>{collectionData.user.userNickName ? collectionData.user.userNickName : collectionData.user.userName}</span>
+              </Link>
+              <span className="meta__song-count">{collectionData.collectionMusicsNumber} 首音乐</span>
+            </div>
+            <div className="header__actions">
+              <button className="action-button play-all" onClick={handlePlayAll}>
+                {isCurrentCollectionPlaying && isPlaying ? <FaPause /> : <FaPlay />}
+                {isCurrentCollectionPlaying && isPlaying ? '暂停播放' : '播放全部'}
+              </button>
+              {auth.userId === collectionData.user.userId && (
+                <button className="action-button manage" onClick={handleToggleManageMode}>
+                  {isManaging ? '完成' : '管理歌曲'}
+                </button>
+              )}
+            </div>
+          </div>
+        </header>
 
-      <div className="collection-content-body">
         <main className="music-list-container">
-          {isLoading ? (
+          {isManaging && (
+            <div className="manage-actions-bar">
+              <button
+                className="action-button remove-selected"
+                onClick={handleRemoveSelected}
+                disabled={selectedMusicIds.length === 0 || isRemoving}
+              >
+                {isRemoving ? '正在移出...' : `移出所选 (${selectedMusicIds.length})`}
+              </button>
+            </div>
+          )}
+          {error && <p className="page-status error" style={{padding: '10px 0'}}>{error}</p>}
+          {isLoading && currentPage > 1 ? ( // 仅在翻页时显示加载状态
             <div className="page-status">正在加载音乐...</div>
           ) : (
             <>
               <ul>
                 {musics.length > 0 ? (
                   musics.map((music, index) => (
-                    <MusicListItemPublic 
-                      key={music.musicId} 
-                      music={music}
-                      index={(currentPage - 1) * 15 + index + 1}
-                      onPlay={() => handlePlaySingle(music)}
-                      isPlaying={currentTrack?.musicId === music.musicId && isPlaying}
-                      width="100%"
-                    />
+                    <li key={music.musicId} className={`music-list-item-wrapper ${isManaging ? 'managing' : ''}`}>
+                      {isManaging && (
+                        <input
+                          type="checkbox"
+                          className="music-select-checkbox"
+                          checked={selectedMusicIds.includes(music.musicId)}
+                          onChange={() => handleSelectMusic(music.musicId)}
+                          aria-label={`选择 ${music.musicName}`}
+                        />
+                      )}
+                      <MusicListItemPublic 
+                        music={music}
+                        index={(currentPage - 1) * 15 + index + 1}
+                        onPlay={() => handlePlaySingle(music)}
+                        isPlaying={currentTrack?.musicId === music.musicId && isPlaying}
+                        width="100%"
+                      />
+                    </li>
                   ))
                 ) : (
                   <li className="no-music-message">这个歌单还没有收藏音乐。</li>
@@ -219,43 +305,44 @@ const CollectionInfo = () => {
             </>
           )}
         </main>
-
-        <aside className="collection-comments-section">
-          <h3 className="comments-section-title">评论 ({collectionData.collectionCommentedCount})</h3>
-          <div className="comments-list-wrapper">
-            {comments && comments.length > 0 ? (
-              <ul className="comment-list-root">
-                {comments.map((comment) => (
-                  <CommentListItem
-                    key={comment.commentId}
-                    comment={comment}
-                    onReplyAdded={handleReplyAdded}
-                    rootCommentId={comment.commentId}
-                  />
-                ))}
-              </ul>
-            ) : (
-              <p className="no-comments">还没有评论，快来抢沙发吧！</p>
-            )}
-          </div>
-          <footer className="comment-form-footer">
-            <form onSubmit={handlePostComment} className="comment-form">
-              <textarea
-                ref={textareaRef}
-                value={commentText}
-                onChange={(e) => setCommentText(e.target.value)}
-                placeholder={auth.userId ? "留下你的精彩评论..." : "请登录后发表评论"}
-                rows="1"
-                disabled={!auth.userId || isSubmitting}
-              />
-              <button type="submit" disabled={!commentText.trim() || isSubmitting}>
-                {isSubmitting ? "..." : "发布"}
-              </button>
-            </form>
-            {commentError && <p className="form-error">{commentError}</p>}
-          </footer>
-        </aside>
       </div>
+
+      {/* ===== 结构变更：右侧评论区 ===== */}
+      <aside className="collection-comments-section">
+        <h3 className="comments-section-title">评论 ({collectionData.collectionCommentedCount})</h3>
+        <div className="comments-list-wrapper">
+          {comments && comments.length > 0 ? (
+            <ul className="comment-list-root">
+              {comments.map((comment) => (
+                <CommentListItem
+                  key={comment.commentId}
+                  comment={comment}
+                  onReplyAdded={handleReplyAdded}
+                  rootCommentId={comment.commentId}
+                />
+              ))}
+            </ul>
+          ) : (
+            <p className="no-comments">还没有评论，快来抢沙发吧！</p>
+          )}
+        </div>
+        <footer className="comment-form-footer">
+          <form onSubmit={handlePostComment} className="comment-form">
+            <textarea
+              ref={textareaRef}
+              value={commentText}
+              onChange={(e) => setCommentText(e.target.value)}
+              placeholder={auth.userId ? "留下你的精彩评论..." : "请登录后发表评论"}
+              rows="1"
+              disabled={!auth.userId || isSubmitting}
+            />
+            <button type="submit" disabled={!commentText.trim() || isSubmitting}>
+              {isSubmitting ? "..." : "发布"}
+            </button>
+          </form>
+          {commentError && <p className="form-error">{commentError}</p>}
+        </footer>
+      </aside>
     </div>
   );
 };

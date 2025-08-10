@@ -77,7 +77,7 @@ public class SearchServiceImpl implements SearchService {
                 .stream()
                 .map(SearchMsgDto::getSearchContent)
                 .distinct()
-                .limit(5)
+//                .limit(5)
                 .toList();
     }
 

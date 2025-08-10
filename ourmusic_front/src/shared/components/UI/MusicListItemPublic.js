@@ -172,7 +172,7 @@ const MusicListItemPublic = (props) => {
 
   const handleDeleteConfirm = (event) => {
     event.preventDefault();
-    axiosClient.delete(`/api/music/${music.musicId}`).then(() => {
+    axiosClient.delete(`/api/music/${music.musicId}/user/${auth.userId}`).then(() => {
       setShowDeleteModal(false);
       window.location.reload();
     });

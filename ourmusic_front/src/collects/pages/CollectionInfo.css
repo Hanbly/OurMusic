@@ -1,6 +1,28 @@
+/* --- 页面整体布局 --- */
+
+/* 通用的页面样式，可以被其他组件共享 */
 .collection-info-page {
-  padding: 2rem;
+  padding: 2rem; 
   color: var(--primary-text-color);
+}
+
+/* 
+  将两栏布局样式绑定到新的、唯一的类 'collection-detail-view' 上。
+  这样它就只会影响 CollectionInfo 组件。
+*/
+.collection-detail-view {
+  display: flex;
+  gap: 2rem; 
+  align-items: flex-start;
+}
+
+/* 左侧主内容容器 */
+.collection-detail-view .collection-main-content {
+  flex: 2; 
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
 }
 
 .page-status {
@@ -14,11 +36,11 @@
   color: var(--danger-color);
 }
 
+/* --- 歌单头部 --- */
 .collection-info-header {
   display: flex;
   gap: 2rem;
-  margin-bottom: 2rem;
-  align-items: flex-end; /* 垂直底部对齐 */
+  align-items: center; 
 }
 
 .header__image-container {
@@ -118,15 +140,17 @@
   color: var(--secondary-text-color);
 }
 
+/* --- 头部操作按钮 --- */
 .header__actions {
   margin-top: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
 }
 
-.action-button.play-all {
-  background-color: var(--primary-purple);
-  color: white;
+.action-button {
   border: none;
-  padding: 0.8rem 1.8rem;
+  padding: 0.7rem 1.5rem;
   border-radius: 25px;
   font-size: 1rem;
   font-weight: bold;
@@ -134,7 +158,13 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  transition: background-color 0.2s, transform 0.2s;
+  transition: all 0.2s;
+}
+
+.action-button.play-all {
+  background-color: var(--primary-purple);
+  color: white;
+  width: 150px;
 }
 
 .action-button.play-all:hover {
@@ -142,31 +172,22 @@
   transform: scale(1.03);
 }
 
-/* --- 新增：双栏布局 --- */
-.collection-content-body {
-  display: flex;
-  gap: 2rem; /* 两栏之间的间距 */
+.action-button.manage {
+  background-color: transparent;
+  color: var(--secondary-text-color);
+  border: 1px solid var(--border-color);
+  width: 150px;
+}
+
+.action-button.manage:hover {
+  background-color: var(--container-bg-color);
+  color: var(--primary-text-color);
+  border-color: var(--secondary-text-color);
 }
 
 /* --- 左侧歌曲列表 --- */
 .music-list-container {
-  flex: 1;
-  min-width: 0; /* 允许flex item收缩 */
-}
-
-.music-list-container .music-list-header {
-  display: grid;
-  grid-template-columns: 40px 2fr 1.5fr 1.5fr 80px; /* 列定义 */
-  gap: 1rem;
-  padding: 0.5rem 1rem;
-  color: var(--secondary-text-color);
-  font-size: 0.85rem;
-  border-bottom: 1px solid var(--border-color);
-  margin-bottom: 0.5rem;
-  text-transform: uppercase;
-}
-.music-list-container .music-list-header span:first-child {
-  text-align: center;
+  min-width: 0;
 }
 
 .music-list-container ul {
@@ -175,8 +196,75 @@
   margin: 0;
 }
 
+.manage-actions-bar .remove-selected {
+  background-color: var(--danger-color);
+  color: white;
+}
+.manage-actions-bar .remove-selected:disabled {
+  background-color: #555;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.music-list-item-wrapper.managing {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding-left: 0.5rem;
+}
+
+/* 自定义复选框样式 */
+.music-select-checkbox {
+  -webkit-appearance: none;
+  appearance: none;
+  background-color: transparent;
+  margin: 0;
+  font: inherit;
+  color: currentColor;
+  width: 1.15em;
+  height: 1.15em;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  transform: translateY(-0.075em);
+  display: grid;
+  place-content: center;
+  cursor: pointer;
+  position: relative;
+  flex-shrink: 0;
+  transition: all 0.1s ease-in-out;
+}
+.music-select-checkbox:hover {
+  border-color: var(--primary-purple);
+}
+
+.music-select-checkbox::after {
+  content: "";
+  width: 0.65em;
+  height: 0.65em;
+  transform: scale(0);
+  transition: 120ms transform ease-in-out;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3e%3cpath fill='white' d='M6.564.75l-3.59 3.612-1.538-1.55L0 4.26 2.974 7.25 8 2.193z'/%3e%3c/svg%3e");
+  background-size: contain;
+  background-repeat: no-repeat;
+}
+
+.music-select-checkbox:checked {
+  background-color: var(--primary-purple);
+  border-color: var(--primary-purple);
+}
+
+.music-select-checkbox:checked::after {
+  transform: scale(1);
+}
+
+.no-music-message {
+  text-align: center;
+  padding: 2rem;
+  color: var(--secondary-text-color);
+}
+
 /* --- 右侧评论区 --- */
-.collection-comments-section {
+.collection-detail-view .collection-comments-section {
   flex: 1;
   min-width: 0;
   background-color: var(--container-bg-color);
@@ -184,7 +272,16 @@
   border-radius: var(--border-radius);
   display: flex;
   flex-direction: column;
-  max-height: 70vh; /* 限制最大高度，使其可滚动 */
+  max-height: 85vh;
+  position: sticky;
+  
+  /* ***** 关键修复 *****
+     之前: top: 2rem;
+     现在: 使用 calc() 计算新的 top 值。
+     70px 是对您顶部固定导航栏高度的估算，您可以根据实际高度微调。
+     2rem 是您原来设置的额外间距。
+  */
+  top: calc(70px + 2rem); 
 }
 
 .comments-section-title {
@@ -194,13 +291,13 @@
   color: var(--primary-text-color);
   border-bottom: 1px solid var(--border-color);
   padding-bottom: 1rem;
-  flex-shrink: 0; /* 防止标题被压缩 */
+  flex-shrink: 0;
 }
 
 .comments-list-wrapper {
-  flex-grow: 1; /* 占据剩余空间 */
-  overflow-y: auto; /* 关键：使评论列表可滚动 */
-  padding-right: 0.5rem; /* 为滚动条留出空间 */
+  flex-grow: 1;
+  overflow-y: auto;
+  padding-right: 0.5rem;
 }
 
 .no-comments {
@@ -216,48 +313,47 @@
   flex-shrink: 0;
 }
 
-/* 沿用 MusicInfo 的评论表单样式 */
 .comment-form {
-    display: flex;
-    gap: 10px;
+  display: flex;
+  gap: 10px;
 }
 .comment-form textarea {
-    flex-grow: 1;
-    background-color: rgba(255, 255, 255, 0.1);
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    padding: 0.75rem;
-    color: var(--primary-text-color);
-    font-family: inherit;
-    font-size: 0.9rem;
-    resize: none;
-    overflow-y: hidden;
-    transition: all 0.2s ease;
+  flex-grow: 1;
+  background-color: rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 0.75rem;
+  color: var(--primary-text-color);
+  font-family: inherit;
+  font-size: 0.9rem;
+  resize: none;
+  overflow-y: hidden;
+  transition: all 0.2s ease;
 }
 .comment-form textarea:focus {
-    outline: none;
-    border-color: var(--primary-purple);
-    box-shadow: 0 0 0 3px rgba(127, 90, 240, 0.2);
+  outline: none;
+  border-color: var(--primary-purple);
+  box-shadow: 0 0 0 3px rgba(127, 90, 240, 0.2);
 }
 .comment-form button {
-    background-color: var(--primary-purple);
-    color: white;
-    border: none;
-    border-radius: 8px;
-    padding: 0 1.5rem;
-    font-weight: bold;
-    cursor: pointer;
-    transition: background-color 0.2s ease;
+  background-color: var(--primary-purple);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 0 1.5rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
 }
 .comment-form button:hover:not(:disabled) {
-    background-color: var(--secondary-purple);
+  background-color: var(--secondary-purple);
 }
 .comment-form button:disabled {
-    background-color: #555;
-    cursor: not-allowed;
+  background-color: #555;
+  cursor: not-allowed;
 }
 .form-error {
-    color: var(--danger-color);
-    font-size: 0.85rem;
-    margin-top: 0.5rem;
+  color: var(--danger-color);
+  font-size: 0.85rem;
+  margin-top: 0.5rem;
 }

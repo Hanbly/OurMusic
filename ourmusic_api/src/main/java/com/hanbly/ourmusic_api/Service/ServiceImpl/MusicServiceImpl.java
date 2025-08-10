@@ -11,7 +11,6 @@ import com.hanbly.ourmusic_api.pojo.Music;
 import com.hanbly.ourmusic_api.pojo.RBAC.User;
 import com.hanbly.ourmusic_api.pojo.dto.*;
 import jakarta.persistence.EntityNotFoundException;
-import jakarta.persistence.criteria.Predicate;
 import jakarta.transaction.Transactional;
 import me.xdrop.fuzzywuzzy.FuzzySearch;
 import me.xdrop.fuzzywuzzy.model.BoundExtractedResult;
@@ -20,7 +19,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -162,7 +160,7 @@ public class MusicServiceImpl implements MusicService {
 
     @Override
     public Page<MusicDto> findMusicByUserId(Integer userId, Pageable pageable) {
-        Page<Music> musicPage = musicDao.findAllByUser_UserId(userId, pageable);
+        Page<Music> musicPage = musicDao.findAllByUser_UserIdOrderByMusicFile_UploadTimestampDesc(userId, pageable);
 
         List<Music> musicsOnThisPage = musicPage.getContent();
         List<MusicDto> musicDtosOnThisPage = dealWithBatchDataStats.dealWithMusicListToResultDto(musicsOnThisPage);
@@ -182,7 +180,13 @@ public class MusicServiceImpl implements MusicService {
     @Override
     public Page<MusicDto> findMusicBySomething(String genre, String musicName, String musicArtist, String musicAlbum, String musicYear, String mode, Pageable pageable) {
 
+//        List<Music> musics = musicDao.findCandidatesByCriteria(genre, musicName, musicArtist, musicAlbum, musicYear);
         List<Music> musics = musicDao.findAll();
+
+        if (musics.isEmpty()) {
+            return Page.empty(pageable);
+        }
+
         int FILTER_CONFIDENCE_THRESHOLD = 70;
         List<BoundExtractedResult<Music>> musicListFilterGenre;
         List<BoundExtractedResult<Music>> musicListFilterName;

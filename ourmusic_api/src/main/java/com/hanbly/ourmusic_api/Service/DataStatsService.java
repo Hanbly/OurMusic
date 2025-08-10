@@ -14,4 +14,6 @@ public interface DataStatsService {
     ResponseMessage<String> deleteHistory(Integer musicId, Integer userId);
 
     ResponseMessage<String> updateDefault(Integer musicId, Integer userId);
+
+    ResponseMessage<String> deleteCollectFromMC(String collectOwnerType, Integer collectOwnerId, Integer collectDidUserId, Integer collectionId);
 }

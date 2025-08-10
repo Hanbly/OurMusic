@@ -4,7 +4,8 @@ import { FaHistory, FaPlus } from "react-icons/fa";
 
 import axiosClient from "../../../src/api-config";
 import { AuthContext } from "../../context/auth-context";
-import MusicOutput from "../../musics/components/MusicOutput";
+// import MusicOutput from "../../musics/components/MusicOutput";
+import MusicOutputContainer from "../../musics/components/MusicOutputContainer";
 import CollectionOutput from "../../collects/components/CollectionOutput";
 import EditModal from "../../shared/components/EditModal/EditModal";
 import Pagination from "../../shared/components/UI/Pagination"; // 引入分页组件
@@ -700,7 +701,7 @@ const MyMusics = () => {
               />
             )}
             {activeOutput === "Shared" && (
-              <MusicOutput
+              <MusicOutputContainer
                 musics={activeData.content}
                 isLoading={activeData.isLoading}
                 error={activeData.error}

@@ -149,14 +149,35 @@ public class DataStatsServiceImpl implements DataStatsService {
             CollectStats newCollectStats = new CollectStats(ownerType, musicId, user, collection);
             collectStatsDao.save(newCollectStats);
             // 添加播放记录
-            Play play = new Play(Play.OwnerType.MUSIC, musicId, user);
-            playDao.save(play);
+            Play exPlay = playDao.findByPlayOwnerTypeAndPlayOwnerIdAndPlayedByUser_UserId(Play.OwnerType.MUSIC, musicId, user.getUserId());
+            if(exPlay != null){
+                Instant newTimestamp = Instant.now();
+                exPlay.setPlayTimestamp(newTimestamp);
+                playDao.save(exPlay);
+                System.out.println("更新播放记录");
+            }else{
+                Play play = new Play(Play.OwnerType.MUSIC, musicId, user);
+                playDao.save(play);
+                System.out.println("添加播放记录");
+            }
             isCollected = true;
         }else{
             // bug : 超时移出逻辑不该在这，这里应该重新添加历史记录
             // 可能的解决方法：前端定期发送一个请求，后端进行时间对比，清理所有时间过长的历史记录
             collectStats.setCollectStatsTimestamp(Instant.now());
             collectStatsDao.save(collectStats);
+            // 添加播放记录
+            Play exPlay = playDao.findByPlayOwnerTypeAndPlayOwnerIdAndPlayedByUser_UserId(Play.OwnerType.MUSIC, musicId, user.getUserId());
+            if(exPlay != null){
+                Instant newTimestamp = Instant.now();
+                exPlay.setPlayTimestamp(newTimestamp);
+                playDao.save(exPlay);
+                System.out.println("更新播放记录");
+            }else{
+                Play play = new Play(Play.OwnerType.MUSIC, musicId, user);
+                playDao.save(play);
+                System.out.println("添加播放记录");
+            }
             return ResponseMessage.success("音乐已存在历史记录，更新时间", null);
         }
         musicCollectionDao.save(collection);
@@ -213,5 +234,32 @@ public class DataStatsServiceImpl implements DataStatsService {
         }
         musicCollectionDao.save(collection);
         return isCollected ? ResponseMessage.success("音乐加入默认歌单成功", null) : ResponseMessage.success("音乐取消加入默认歌单成功", null);
+    }
+
+    @Override
+    public ResponseMessage<String> deleteCollectFromMC(String collectOwnerType, Integer collectOwnerId, Integer collectDidUserId, Integer collectionId) {
+        if(collectOwnerType == null || collectOwnerId == null || collectDidUserId == null || collectionId == null){
+            throw new IllegalArgumentException("参数错误");
+        }
+        CollectStats.OwnerType ownerType = CollectStats.OwnerType.valueOf(collectOwnerType);
+        if(ownerType != CollectStats.OwnerType.MUSIC){
+            throw new IllegalArgumentException("参数错误，非音乐类型");
+        }
+        Music music = musicDao.findById(collectOwnerId).orElseThrow(() -> new EntityNotFoundException("无法查询音乐"));
+        User user = userDao.findById(collectDidUserId).orElseThrow(() -> new EntityNotFoundException("无法查询用户"));
+        MusicCollection collection = musicCollectionDao.findById(collectionId).orElseThrow(() -> new EntityNotFoundException("无法查询歌单"));
+        if(!collection.getUser().getUserId().equals(collectDidUserId)){
+            throw new IllegalArgumentException("操作违规，歌单不属于该用户"); // 歌单不属于该用户
+        }
+        CollectStats collectStats = collectStatsDao.findByCollectStatsOwnerTypeAndCollectStatsOwnerIdAndCollectStatsdByUser_UserIdAndCollectStatsToCollection_CollectionId(CollectStats.OwnerType.MUSIC, collectOwnerId, collectDidUserId, collectionId);
+        boolean isCollected = false;
+        if(collectStats == null){
+            throw new EntityNotFoundException("无法查询收藏记录");
+        }else{
+            collection.getMusics().remove(music);
+            collectStatsDao.delete(collectStats);
+        }
+        musicCollectionDao.save(collection);
+        return ResponseMessage.success("音乐取消收藏成功", null);
     }
 }

@@ -55,7 +55,7 @@ public class MusicController {
     @GetMapping("/batch-by-user")        // URL: localhost:8080/api/music/batch-by-user?userId=...  method: GET
     public ResponseMessage<Page<MusicDto>> getMusicByUser(
             @RequestParam Integer userId,
-            @PageableDefault(size = 4, direction = Sort.Direction.DESC) Pageable pageable) {
+            @PageableDefault(size = 4) Pageable pageable) {
         Page<MusicDto> musicList = musicService.findMusicByUserId(userId, pageable);
         if(musicList == null || musicList.isEmpty()){
             return ResponseMessage.success("音乐列表为空", null);

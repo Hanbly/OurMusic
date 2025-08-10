@@ -57,4 +57,18 @@ public class DataStatsController {
         return dataStatsService.updateDefault(musicId, userId);
     }
 
+    /**
+     * 音乐取消收藏（从歌单）
+     * @param collectOwnerType
+     * @param collectOwnerId
+     * @param collectDidUserId
+     * @param collectionId
+     * @return 响应信息
+     */
+    @PreAuthorize("hasRole('admin') or authentication.principal.getUserId() == #collectDidUserId")
+    @PutMapping(value = "/d-collect/{collectOwnerType}/{collectOwnerId}/user/{collectDidUserId}/out-collection/{collectionId}")     // URL: localhost:8080/api/data-stats/collect/{collectOwnerType}/{collectOwnerId}/user/{collectDidUserId}/to-collection/{collectionId} method: PUT
+    public ResponseMessage<String> deleteCollectFromMC(@PathVariable String collectOwnerType, @PathVariable Integer collectOwnerId, @PathVariable Integer collectDidUserId, @PathVariable(required = true) Integer collectionId){
+        return dataStatsService.deleteCollectFromMC(collectOwnerType, collectOwnerId, collectDidUserId, collectionId);
+    }
+
 }

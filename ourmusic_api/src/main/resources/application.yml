@@ -47,3 +47,8 @@ minio:
   access-key: hanbly
   secret-key: 88888888
   bucket-name: om-files
+
+logging:
+  level:
+    org.springframework.web: TRACE
+    org.springframework.security: TRACE

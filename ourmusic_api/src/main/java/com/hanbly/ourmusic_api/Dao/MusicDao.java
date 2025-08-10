@@ -1,5 +1,6 @@
 package com.hanbly.ourmusic_api.Dao;
 
+import com.hanbly.ourmusic_api.Dao.CustomRepositoryInterface.MusicRepositoryCustom;
 import com.hanbly.ourmusic_api.pojo.DataStats.CollectStats;
 import com.hanbly.ourmusic_api.pojo.Music;
 import org.springframework.data.domain.Page;
@@ -13,9 +14,13 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public interface MusicDao extends JpaRepository<Music, Integer>, JpaSpecificationExecutor<Music> {
+public interface MusicDao extends JpaRepository<Music, Integer>, JpaSpecificationExecutor<Music>, MusicRepositoryCustom {
 
-    Page<Music> findAllByUser_UserId(Integer userId, Pageable pageable);
+//    @Query("SELECT m FROM Music m " +
+//            "JOIN CustomFile cf ON m.musicFile.customFileId = cf.customFileId " +
+//            "WHERE m.user.userId = :userId " +
+//            "ORDER BY cf.uploadTimestamp DESC ")
+    Page<Music> findAllByUser_UserIdOrderByMusicFile_UploadTimestampDesc(Integer userId, Pageable pageable);
 
     List<Music> findAllByMusicGenreOrMusicNameOrMusicArtistOrMusicAlbumOrMusicYear(String genre, String name, String artist, String album, String year);
 

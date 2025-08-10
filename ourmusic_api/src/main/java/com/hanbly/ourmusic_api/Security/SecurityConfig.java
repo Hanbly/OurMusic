@@ -4,6 +4,7 @@ import com.hanbly.ourmusic_api.Security.JwtAuthenticationTokenFilter;
 import jakarta.annotation.Resource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -54,6 +55,10 @@ public class SecurityConfig {
                                 "/api/music/batch",
                                 "/api/music/week-hot",
                                 "/api/collection/batch").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/**").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/**").authenticated()
+                        .requestMatchers(HttpMethod.PUT, "/api/**").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/api/**").authenticated() // <--- 明确允许DELETE
                         .anyRequest().authenticated()
                 )
                 .csrf(AbstractHttpConfigurer::disable);

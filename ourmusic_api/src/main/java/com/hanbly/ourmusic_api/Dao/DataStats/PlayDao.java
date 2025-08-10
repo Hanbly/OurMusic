@@ -15,4 +15,6 @@ public interface PlayDao extends JpaRepository<Play, Integer>, JpaSpecificationE
 
     List<Play> findAllByPlayTimestampGreaterThanEqual(Instant playTimestamp);
 
+    Play findByPlayOwnerTypeAndPlayOwnerIdAndPlayedByUser_UserId(Play.OwnerType owner, Integer playOwnerId, Integer userId);
+
 }
