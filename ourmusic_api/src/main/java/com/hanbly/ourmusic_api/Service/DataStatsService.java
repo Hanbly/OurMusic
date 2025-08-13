@@ -1,6 +1,9 @@
 package com.hanbly.ourmusic_api.Service;
 
+import com.hanbly.ourmusic_api.pojo.DataStats.DSdto.SimpleCollectStatsOwner;
 import com.hanbly.ourmusic_api.pojo.ResponseMessage;
+
+import java.util.List;
 
 public interface DataStatsService {
     ResponseMessage<String> updateLike(String likeOwnerType, Integer likeOwnerId, Integer likeDidUserId);
@@ -16,4 +19,6 @@ public interface DataStatsService {
     ResponseMessage<String> updateDefault(Integer musicId, Integer userId);
 
     ResponseMessage<String> deleteCollectFromMC(String collectOwnerType, Integer collectOwnerId, Integer collectDidUserId, Integer collectionId);
+
+    ResponseMessage<String> deleteCollectsFromMC(List<SimpleCollectStatsOwner> collectStatsOwners, Integer collectDidUserId, Integer collectionId);
 }

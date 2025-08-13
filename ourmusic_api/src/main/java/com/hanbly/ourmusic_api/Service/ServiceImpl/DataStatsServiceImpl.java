@@ -9,6 +9,7 @@ import com.hanbly.ourmusic_api.Dao.MusicDao;
 import com.hanbly.ourmusic_api.Dao.UserDao;
 import com.hanbly.ourmusic_api.Service.DataStatsService;
 import com.hanbly.ourmusic_api.pojo.DataStats.CollectStats;
+import com.hanbly.ourmusic_api.pojo.DataStats.DSdto.SimpleCollectStatsOwner;
 import com.hanbly.ourmusic_api.pojo.DataStats.Dislike;
 import com.hanbly.ourmusic_api.pojo.DataStats.Like;
 import com.hanbly.ourmusic_api.pojo.DataStats.Play;
@@ -22,6 +23,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 @Transactional
@@ -245,22 +248,54 @@ public class DataStatsServiceImpl implements DataStatsService {
             throw new IllegalArgumentException("参数错误");
         }
         CollectStats.OwnerType ownerType = CollectStats.OwnerType.valueOf(collectOwnerType);
-        if(ownerType != CollectStats.OwnerType.MUSIC){
+        if(ownerType != CollectStats.OwnerType.MUSIC || !userDao.existsById(collectDidUserId)){
             throw new IllegalArgumentException("参数错误，非音乐类型");
         }
         Music music = musicDao.findById(collectOwnerId).orElseThrow(() -> new EntityNotFoundException("无法查询音乐"));
-        User user = userDao.findById(collectDidUserId).orElseThrow(() -> new EntityNotFoundException("无法查询用户"));
         MusicCollection collection = musicCollectionDao.findById(collectionId).orElseThrow(() -> new EntityNotFoundException("无法查询歌单"));
         if(!collection.getUser().getUserId().equals(collectDidUserId)){
             throw new IllegalArgumentException("操作违规，歌单不属于该用户"); // 歌单不属于该用户
         }
         CollectStats collectStats = collectStatsDao.findByCollectStatsOwnerTypeAndCollectStatsOwnerIdAndCollectStatsdByUser_UserIdAndCollectStatsToCollection_CollectionId(CollectStats.OwnerType.MUSIC, collectOwnerId, collectDidUserId, collectionId);
-        boolean isCollected = false;
         if(collectStats == null){
             throw new EntityNotFoundException("无法查询收藏记录");
         }else{
             collection.getMusics().remove(music);
             collectStatsDao.delete(collectStats);
+        }
+        musicCollectionDao.save(collection);
+        return ResponseMessage.success("音乐取消收藏成功", null);
+    }
+
+    @Override
+    public ResponseMessage<String> deleteCollectsFromMC(List<SimpleCollectStatsOwner> collectStatsOwners, Integer collectDidUserId, Integer collectionId) {
+        if (collectStatsOwners == null || collectStatsOwners.isEmpty() || collectDidUserId == null || collectionId == null) {
+            throw new IllegalArgumentException("参数错误");
+        }
+        if(!userDao.existsById(collectDidUserId) ||
+                !collectStatsOwners
+                        .stream()
+                        .allMatch(owner -> owner.getCollectStatsOwnerType() == CollectStats.OwnerType.MUSIC)){
+            throw new IllegalArgumentException("参数错误，非音乐类型");
+        }
+        MusicCollection collection = musicCollectionDao.findById(collectionId).orElseThrow(() -> new EntityNotFoundException("无法查询歌单"));
+        if(!collection.getUser().getUserId().equals(collectDidUserId)){
+            throw new IllegalArgumentException("操作违规，歌单不属于该用户"); // 歌单不属于该用户
+        }
+        List<Integer> collectStatsOwnerIds = collectStatsOwners.stream().map(SimpleCollectStatsOwner::getCollectStatsOwnerId).toList();
+        if (collectStatsOwnerIds.size() != collectStatsOwners.size()) {
+            throw new RuntimeException("运行时错误，请重试");
+        }
+        List<Music> musicList = musicDao.findAllById(collectStatsOwnerIds);
+        List<CollectStats> collectStatsList = collectStatsDao.findAllByCollectStatsOwnerTypeAndCollectStatsOwnerIdInAndCollectStatsdByUser_UserIdAndCollectStatsToCollection_CollectionId(CollectStats.OwnerType.MUSIC, collectStatsOwnerIds, collectDidUserId, collectionId);
+
+        if(musicList.isEmpty()){
+            throw new EntityNotFoundException("无法查询音乐");
+        }else if(collectStatsList == null || collectStatsList.isEmpty()){
+            return ResponseMessage.success("音乐已取消收藏或不存在收藏记录", null);
+        }else{
+            collection.getMusics().removeAll(musicList);
+            collectStatsDao.deleteAll(collectStatsList);
         }
         musicCollectionDao.save(collection);
         return ResponseMessage.success("音乐取消收藏成功", null);

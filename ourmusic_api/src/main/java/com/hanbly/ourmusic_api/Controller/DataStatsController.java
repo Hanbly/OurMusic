@@ -1,10 +1,13 @@
 package com.hanbly.ourmusic_api.Controller;
 
 import com.hanbly.ourmusic_api.Service.DataStatsService;
+import com.hanbly.ourmusic_api.pojo.DataStats.DSdto.SimpleCollectStatsOwner;
 import com.hanbly.ourmusic_api.pojo.ResponseMessage;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/data-stats")
@@ -59,16 +62,22 @@ public class DataStatsController {
 
     /**
      * 音乐取消收藏（从歌单）
-     * @param collectOwnerType
-     * @param collectOwnerId
-     * @param collectDidUserId
-     * @param collectionId
+     * @param collectOwnerType 收藏记录类型
+     * @param collectOwnerId 收藏记录拥有者id
+     * @param collectDidUserId 收藏记录操作用户id
+     * @param collectionId 收藏记录有关联的歌单id
      * @return 响应信息
      */
     @PreAuthorize("hasRole('admin') or authentication.principal.getUserId() == #collectDidUserId")
     @PutMapping(value = "/d-collect/{collectOwnerType}/{collectOwnerId}/user/{collectDidUserId}/out-collection/{collectionId}")     // URL: localhost:8080/api/data-stats/collect/{collectOwnerType}/{collectOwnerId}/user/{collectDidUserId}/to-collection/{collectionId} method: PUT
     public ResponseMessage<String> deleteCollectFromMC(@PathVariable String collectOwnerType, @PathVariable Integer collectOwnerId, @PathVariable Integer collectDidUserId, @PathVariable(required = true) Integer collectionId){
         return dataStatsService.deleteCollectFromMC(collectOwnerType, collectOwnerId, collectDidUserId, collectionId);
+    }
+
+    @PreAuthorize("hasRole('admin') or authentication.principal.getUserId() == #collectDidUserId")
+    @PutMapping(value = "/batch-d-collect/user/{collectDidUserId}/out-collection/{collectionId}")     // URL: localhost:8080/api/data-stats/collect/{collectOwnerType}/{collectOwnerId}/user/{collectDidUserId}/to-collection/{collectionId} method: PUT
+    public ResponseMessage<String> deleteCollectsFromMC(@RequestBody List<SimpleCollectStatsOwner> collectStatsOwners, @PathVariable Integer collectDidUserId, @PathVariable(required = true) Integer collectionId){
+        return dataStatsService.deleteCollectsFromMC(collectStatsOwners, collectDidUserId, collectionId);
     }
 
 }

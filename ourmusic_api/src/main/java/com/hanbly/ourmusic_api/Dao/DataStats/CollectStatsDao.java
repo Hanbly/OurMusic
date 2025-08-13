@@ -30,6 +30,8 @@ public interface CollectStatsDao extends JpaRepository<CollectStats, Integer>, J
 
     CollectStats findByCollectStatsOwnerTypeAndCollectStatsOwnerIdAndCollectStatsdByUser_UserIdAndCollectStatsToCollection_CollectionId(CollectStats.OwnerType collectStatsOwnerType, Integer collectStatsOwnerId, Integer collectStatsdByUserId, Integer collectStatsToCollectionId);
 
+    List<CollectStats> findAllByCollectStatsOwnerTypeAndCollectStatsOwnerIdInAndCollectStatsdByUser_UserIdAndCollectStatsToCollection_CollectionId(CollectStats.OwnerType collectStatsOwnerType, List<Integer> collectStatsOwnerIds, Integer collectStatsdByUserId, Integer collectStatsToCollectionId);
+
     CollectStats findByCollectStatsOwnerTypeAndCollectStatsOwnerIdAndCollectStatsdByUser_UserId(CollectStats.OwnerType collectStatsOwnerType, Integer collectStatsOwnerId, Integer collectStatsdByUserId);
 
     Boolean existsByCollectStatsOwnerTypeAndCollectStatsOwnerIdAndCollectStatsdByUser_UserId(CollectStats.OwnerType collectStatsOwnerType, Integer collectStatsOwnerId, Integer collectStatsdByUserId);

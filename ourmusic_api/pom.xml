@@ -57,12 +57,12 @@
             <version>4.0.1</version>
             <scope>provided</scope>
         </dependency>
-
+        <!-- 添加 spring security 依赖 -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-security</artifactId>
         </dependency>
-
+        <!-- 添加 解析音频文件 jaudiotagger 依赖 -->
         <dependency>
             <groupId>org.jaudiotagger</groupId>
             <artifactId>jaudiotagger</artifactId>

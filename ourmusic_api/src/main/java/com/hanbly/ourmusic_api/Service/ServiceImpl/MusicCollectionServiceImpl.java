@@ -307,9 +307,11 @@ public class MusicCollectionServiceImpl implements MusicCollectionService {
             if (collectionGenre != null && !collectionGenre.trim().isEmpty()) {
                 predicates.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("collectionGenre")), "%" + collectionGenre.toLowerCase() + "%"));
             }
-            // Hibernate/JPA在处理多对多连接时可能会产生重复的结果
-            // 例如，如果一首音乐属于两个歌单，而你只通过其他条件查询，它可能会出现两次
-            // 使用 query.distinct(true) 可以确保返回的 Music 实例是唯一的
+            /* Hibernate/JPA在处理多对多连接时可能会产生重复的结果
+               例如，如果一首音乐属于两个歌单，而你只通过其他条件查询，它可能会出现两次
+               使用 query.distinct(true) 可以确保返回的 Music 实例是唯一的
+            */
+            assert query != null;
             query.distinct(true);
             return criteriaBuilder.or(predicates.toArray(new Predicate[0]));
         };
