@@ -31,6 +31,9 @@ public class SubCommentDto {
     @NotNull
     private UserDto replyToUserDto;
 
+    private Boolean operateUserLikedOrNot;
+    private Boolean operateUserDislikedOrNot;
+
     public SubCommentDto() {
     }
 
@@ -104,5 +107,21 @@ public class SubCommentDto {
 
     public void setReplyToUserDto(@NotNull UserDto replyToUserDto) {
         this.replyToUserDto = replyToUserDto;
+    }
+
+    public Boolean getOperateUserLikedOrNot() {
+        return operateUserLikedOrNot;
+    }
+
+    public void setOperateUserLikedOrNot(Boolean operateUserLikedOrNot) {
+        this.operateUserLikedOrNot = operateUserLikedOrNot;
+    }
+
+    public Boolean getOperateUserDislikedOrNot() {
+        return operateUserDislikedOrNot;
+    }
+
+    public void setOperateUserDislikedOrNot(Boolean operateUserDislikedOrNot) {
+        this.operateUserDislikedOrNot = operateUserDislikedOrNot;
     }
 }

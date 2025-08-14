@@ -177,6 +177,7 @@
   color: var(--secondary-text-color);
   border: 1px solid var(--border-color);
   width: 150px;
+  justify-content: center;
 }
 
 .action-button.manage:hover {
@@ -356,4 +357,15 @@
   color: var(--danger-color);
   font-size: 0.85rem;
   margin-top: 0.5rem;
+}
+
+.action-button.add-music {
+  background-color: var(--primary-purple);
+  color: white;
+  width: 150px; /* 与其他按钮宽度保持一致 */
+}
+
+.action-button.add-music:hover {
+  background-color: var(--secondary-purple);
+  transform: scale(1.03);
 }

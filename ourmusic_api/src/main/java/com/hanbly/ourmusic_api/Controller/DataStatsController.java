@@ -69,13 +69,19 @@ public class DataStatsController {
      * @return 响应信息
      */
     @PreAuthorize("hasRole('admin') or authentication.principal.getUserId() == #collectDidUserId")
-    @PutMapping(value = "/d-collect/{collectOwnerType}/{collectOwnerId}/user/{collectDidUserId}/out-collection/{collectionId}")     // URL: localhost:8080/api/data-stats/collect/{collectOwnerType}/{collectOwnerId}/user/{collectDidUserId}/to-collection/{collectionId} method: PUT
+    @PutMapping(value = "/d-collect/{collectOwnerType}/{collectOwnerId}/user/{collectDidUserId}/out-collection/{collectionId}")     // URL: localhost:8080/api/data-stats/d-collect/{collectOwnerType}/{collectOwnerId}/user/{collectDidUserId}/out-collection/{collectionId} method: PUT
     public ResponseMessage<String> deleteCollectFromMC(@PathVariable String collectOwnerType, @PathVariable Integer collectOwnerId, @PathVariable Integer collectDidUserId, @PathVariable(required = true) Integer collectionId){
         return dataStatsService.deleteCollectFromMC(collectOwnerType, collectOwnerId, collectDidUserId, collectionId);
     }
 
     @PreAuthorize("hasRole('admin') or authentication.principal.getUserId() == #collectDidUserId")
-    @PutMapping(value = "/batch-d-collect/user/{collectDidUserId}/out-collection/{collectionId}")     // URL: localhost:8080/api/data-stats/collect/{collectOwnerType}/{collectOwnerId}/user/{collectDidUserId}/to-collection/{collectionId} method: PUT
+    @PutMapping(value = "/batch-a-collect/user/{collectDidUserId}/to-collection/{collectionId}")     // URL: localhost:8080/api/data-stats/batch-a-collect/user/{collectDidUserId}/to-collection/{collectionId} method: PUT
+    public ResponseMessage<String> addCollectsIntoMC(@RequestBody List<SimpleCollectStatsOwner> collectStatsOwners, @PathVariable Integer collectDidUserId, @PathVariable(required = true) Integer collectionId){
+        return dataStatsService.addCollectsIntoMC(collectStatsOwners, collectDidUserId, collectionId);
+    }
+
+    @PreAuthorize("hasRole('admin') or authentication.principal.getUserId() == #collectDidUserId")
+    @PutMapping(value = "/batch-d-collect/user/{collectDidUserId}/out-collection/{collectionId}")     // URL: localhost:8080/api/data-stats/batch-d-collect/user/{collectDidUserId}/out-collection/{collectionId} method: PUT
     public ResponseMessage<String> deleteCollectsFromMC(@RequestBody List<SimpleCollectStatsOwner> collectStatsOwners, @PathVariable Integer collectDidUserId, @PathVariable(required = true) Integer collectionId){
         return dataStatsService.deleteCollectsFromMC(collectStatsOwners, collectDidUserId, collectionId);
     }

@@ -436,6 +436,10 @@ const MyMusics = () => {
           isLoading: false,
         };
       } catch (error) {
+        let errorMessage = "无法解析元数据，请手动填写";
+        if(error.response.status === 413) {
+          errorMessage = error.response.data.message;
+        }
         return {
           id: `${file.name}-${file.lastModified}-${Math.random()}`,
           musicFile: file,
@@ -445,7 +449,7 @@ const MyMusics = () => {
           musicGenre: "",
           musicYear: "",
           isLoading: false,
-          error: "无法解析元数据，请手动填写",
+          error: errorMessage,
         };
       }
     });

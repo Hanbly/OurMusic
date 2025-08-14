@@ -28,5 +28,4 @@ public interface LikeDao extends JpaRepository<Like, Integer>, JpaSpecificationE
     Like findByLikeOwnerTypeAndLikeOwnerIdAndLikedByUser_UserId(Like.OwnerType likeOwnerType, Integer likeOwnerId, Integer likedByUserId);
 
     Boolean existsByLikeOwnerTypeAndLikeOwnerIdAndLikedByUser_UserId(Like.OwnerType likeOwnerType, Integer likeOwnerId, Integer likedByUserId);
-
 }

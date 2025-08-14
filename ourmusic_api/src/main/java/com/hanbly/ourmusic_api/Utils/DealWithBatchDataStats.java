@@ -124,7 +124,6 @@ public class DealWithBatchDataStats {
                 .map(MusicCollection::getCollectionId)
                 .collect(Collectors.toSet());
 
-        // 假设您的枚举类型中有对应 MUSIC_COLLECTION 的值
         // 批量查询点赞数
         Map<Integer, Long> likeCounts = likeDao.findLikeCountsForIdsGroupedById(Like.OwnerType.COLLECTION, collectionIds)
                 .stream()
@@ -184,21 +183,13 @@ public class DealWithBatchDataStats {
                 });
             }
         }
-        // --- 评论总数计算结束 ---
-
-        // 批量查询下载数 (假设收藏也可以被下载)
-        Map<Integer, Long> downloadCounts = downloadDao.findDownloadCountsForIdsGroupedById(Download.OwnerType.COLLECTION, collectionIds)
-                .stream()
-                .collect(Collectors.toMap(CountDto::getId, CountDto::getCount));
 
         // 将结果转换为DTO，并为每个DTO匹配对应的统计数据
         List<MusicCollectionDto> resultDtoList = new ArrayList<>();
         collections.forEach(collection -> {
-            // 假设存在一个转换方法将 MusicCollection 实体转为 DTO
             MusicCollectionDto dto = transformCollectionEntityToDto(collection);
             Integer id = collection.getCollectionId();
 
-            // 假设MusicCollectionDto有以下setter方法
             dto.setCollectionLikedCount(likeCounts.getOrDefault(id, 0L).intValue());
             dto.setCollectionDislikedCount(dislikeCounts.getOrDefault(id, 0L).intValue());
             dto.setCollectionCollectedCount(collectCounts.getOrDefault(id, 0L).intValue());

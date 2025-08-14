@@ -20,5 +20,7 @@ public interface DataStatsService {
 
     ResponseMessage<String> deleteCollectFromMC(String collectOwnerType, Integer collectOwnerId, Integer collectDidUserId, Integer collectionId);
 
+    ResponseMessage<String> addCollectsIntoMC(List<SimpleCollectStatsOwner> collectStatsOwners, Integer collectDidUserId, Integer collectionId);
+
     ResponseMessage<String> deleteCollectsFromMC(List<SimpleCollectStatsOwner> collectStatsOwners, Integer collectDidUserId, Integer collectionId);
 }

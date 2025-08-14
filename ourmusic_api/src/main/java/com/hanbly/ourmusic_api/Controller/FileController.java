@@ -6,6 +6,7 @@ import com.hanbly.ourmusic_api.pojo.dto.FileUploadResponseDto;
 import com.hanbly.ourmusic_api.pojo.dto.MusicFilePreviewDto;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.apache.tomcat.util.http.fileupload.impl.FileSizeLimitExceededException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.multipart.MultipartFile;
 
 import org.springframework.core.io.Resource;
@@ -41,6 +43,13 @@ public class FileController {
     @PreAuthorize(value = "hasRole('admin') or hasRole('user')")
     @PostMapping("/upload")      // URL: localhost:8080/api/files/upload  method:POST
     public ResponseMessage<FileUploadResponseDto> upload(@RequestParam("file") MultipartFile file) throws IOException {
+        long maxSizeInBytes = 50 * 1024 * 1024; // 50MB
+
+        if (file.getSize() > maxSizeInBytes) {
+            // 当文件大小在 0MB ~ 250MB 之间，但大于 50MB 时，会进入这里
+            throw new MaxUploadSizeExceededException(maxSizeInBytes);
+        }
+
         FileUploadResponseDto fileUploadResponseDto = fileService.upload(file);
         return ResponseMessage.success(fileUploadResponseDto);
     }
@@ -48,6 +57,12 @@ public class FileController {
     @PreAuthorize(value = "hasRole('admin') or hasRole('user')")
     @PostMapping(value = "/preview")
     public ResponseMessage<MusicFilePreviewDto> previewMusicFile(@RequestParam("file") MultipartFile file) throws IOException {
+        long maxSizeInBytes = 50 * 1024 * 1024; // 50MB
+
+        if (file.getSize() > maxSizeInBytes) {
+            // 当文件大小在 0MB ~ 250MB 之间，但大于 50MB 时，会进入这里
+            throw new MaxUploadSizeExceededException(maxSizeInBytes);
+        }
         MusicFilePreviewDto filePreviewDto = fileService.previewMusicFile(file);
         return ResponseMessage.success(filePreviewDto);
     }

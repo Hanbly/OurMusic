@@ -71,8 +71,8 @@ public class UserServiceImpl implements UserService {
     @Autowired
     private GenerateValidateCodeUtil generateValidateCodeUtil;
 
-    private final static Long REFRESH_TOKEN_EXPIRE = 3*24*60*60*1000L; // 3天
-    private final static Long API_TOKEN_EXPIRE = 6 * 60 * 60 * 1000L; // 6小时
+    private final static Long REFRESH_TOKEN_EXPIRE = 7*24*60*60*1000L; // 3天
+    private final static Long API_TOKEN_EXPIRE = 3 * 60 * 60 * 1000L; // 3小时
 //    private final static Long REFRESH_TOKEN_EXPIRE = 6 * 1000L;
 //    private final static Long API_TOKEN_EXPIRE = 6 * 1000L;
 

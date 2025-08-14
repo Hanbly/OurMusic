@@ -25,6 +25,9 @@ import org.springframework.stereotype.Service;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -265,6 +268,49 @@ public class DataStatsServiceImpl implements DataStatsService {
         }
         musicCollectionDao.save(collection);
         return ResponseMessage.success("音乐取消收藏成功", null);
+    }
+
+    @Override
+    public ResponseMessage<String> addCollectsIntoMC(List<SimpleCollectStatsOwner> collectStatsOwners, Integer collectDidUserId, Integer collectionId) {
+        if (collectStatsOwners == null || collectStatsOwners.isEmpty() || collectDidUserId == null || collectionId == null) {
+            throw new IllegalArgumentException("参数错误");
+        }
+        User user = userDao.findById(collectDidUserId).orElse(null);
+        if(user == null ||
+                !collectStatsOwners
+                        .stream()
+                        .allMatch(owner -> owner.getCollectStatsOwnerType() == CollectStats.OwnerType.MUSIC)){
+            throw new IllegalArgumentException("参数错误，非音乐类型/用户不存在");
+        }
+        MusicCollection collection = musicCollectionDao.findById(collectionId).orElseThrow(() -> new EntityNotFoundException("无法查询歌单"));
+        if(!collection.getUser().getUserId().equals(collectDidUserId)){
+            throw new IllegalArgumentException("操作违规，歌单不属于该用户"); // 歌单不属于该用户
+        }
+        List<Integer> collectStatsOwnerIds = collectStatsOwners.stream().map(SimpleCollectStatsOwner::getCollectStatsOwnerId).toList();
+        List<CollectStats> collectStatsList = collectStatsDao.findAllByCollectStatsOwnerTypeAndCollectStatsOwnerIdInAndCollectStatsdByUser_UserIdAndCollectStatsToCollection_CollectionId(CollectStats.OwnerType.MUSIC, collectStatsOwnerIds, collectDidUserId, collectionId);
+        List<Music> musicList = musicDao.findAllById(collectStatsOwnerIds);
+
+        if(musicList.isEmpty()){
+            throw new EntityNotFoundException("无法查询音乐");
+        }else if(!collectStatsOwnerIds.isEmpty()){
+            Set<Integer> existingMusicIds = collectStatsList.stream()
+                    .map(CollectStats::getCollectStatsOwnerId)
+                    .collect(Collectors.toSet());
+            // 过滤掉已收藏的音乐
+            musicList = musicList.stream()
+                    .filter(music -> !existingMusicIds.contains(music.getMusicId()))
+                    .toList();
+//            collectStatsList.forEach(cs -> {
+//                musicList.removeAll(musicList.stream().filter(music -> Objects.equals(music.getMusicId(), cs.getCollectStatsOwnerId())).toList());
+//            });
+            collectStatsList.clear();
+        }
+        collection.getMusics().addAll(musicList);
+        musicList.forEach(music -> collectStatsList.add(new CollectStats(CollectStats.OwnerType.MUSIC, music.getMusicId(), user, collection)));
+
+        collectStatsDao.saveAll(collectStatsList);
+        musicCollectionDao.save(collection);
+        return ResponseMessage.success("音乐收藏成功", null);
     }
 
     @Override

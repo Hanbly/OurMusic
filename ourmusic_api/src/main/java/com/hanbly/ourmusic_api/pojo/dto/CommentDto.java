@@ -34,6 +34,9 @@ public class CommentDto {
 
     private List<SubCommentDto> subCommentsDto;
 
+    private Boolean operateUserLikedOrNot;
+    private Boolean operateUserDislikedOrNot;
+
     public CommentDto() {
     }
 
@@ -115,5 +118,21 @@ public class CommentDto {
 
     public void setSubCommentsDto(List<SubCommentDto> subCommentsDto) {
         this.subCommentsDto = subCommentsDto;
+    }
+
+    public Boolean getOperateUserLikedOrNot() {
+        return operateUserLikedOrNot;
+    }
+
+    public void setOperateUserLikedOrNot(Boolean operateUserLikedOrNot) {
+        this.operateUserLikedOrNot = operateUserLikedOrNot;
+    }
+
+    public Boolean getOperateUserDislikedOrNot() {
+        return operateUserDislikedOrNot;
+    }
+
+    public void setOperateUserDislikedOrNot(Boolean operateUserDislikedOrNot) {
+        this.operateUserDislikedOrNot = operateUserDislikedOrNot;
     }
 }

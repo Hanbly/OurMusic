@@ -21,7 +21,7 @@ spring:
     show-sql: true
   servlet:
     multipart:
-      max-file-size: 50MB
+      max-file-size: 250MB
       max-request-size: 500MB
   mail:
     username: 2905651528@qq.com
