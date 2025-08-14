@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useHistory } from "react-router-dom";
+import { useNotification } from "../../context/notification-context";
 import axiosClient from "../../api-config";
 
 // 引入我们已经创建好的通用组件
@@ -12,6 +13,7 @@ import "./MusicDisplay.css";
 const MusicDisplay = () => {
   const { musicId } = useParams();
   const history = useHistory();
+  const { addToast } = useNotification();
 
   const [musicData, setMusicData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -43,7 +45,7 @@ const MusicDisplay = () => {
       } catch (err) {
         setError(err.message);
         // 如果出错，可以选择弹窗提示后返回
-        alert(`加载失败: ${err.message}`);
+        addToast(`加载失败: ${err.message}`, 'error');
         history.goBack()
       } finally {
         setIsLoading(false);
@@ -85,8 +87,6 @@ const MusicDisplay = () => {
           <span>正在加载音乐信息...</span>
         </div>
       )}
-
-      {/* 错误状态已经通过 alert 和 history.goBack() 处理，所以这里不需要特别的UI */}
 
       {/* SidePanel 的显隐完全由 isPanelOpen 状态控制 */}
       <SidePanel show={isPanelOpen} onClose={handleClosePanel}>

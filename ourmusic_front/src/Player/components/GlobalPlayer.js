@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { createPortal } from "react-dom";
 import { useAudio } from "../../context/audio-context";
 import { AuthContext } from "../../context/auth-context";
+import { useNotification } from "../../context/notification-context";
 import DropdownMenuContent from "../../shared/components/UI/DropdownMenuContent";
 import CollectionModal from "../../shared/components/EditModal/CollectModal";
 import PlaylistModal from "../../shared/components/PlaylistModal/PlaylistModal"
@@ -49,6 +50,7 @@ const GlobalPlayer = () => {
     addTrackToList,
   } = useAudio();
   const auth = useContext(AuthContext);
+  const { addToast } = useNotification();
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showCollectionModal, setShowCollectionModal] = useState(false);
@@ -158,7 +160,7 @@ const GlobalPlayer = () => {
 
   const handleAddToPlaylist = (track) => {
     addTrackToList(track);
-    alert(`已将《${track.musicName}》添加到播放列表。`);
+    addToast(`已将《${track.musicName}》添加到播放列表。`, 'success');
   };
 
   const handleCollect = (track) => {
@@ -171,7 +173,7 @@ const GlobalPlayer = () => {
   };
 
   const handleShare = (track) => {
-    alert(`准备分享《${track.musicName}》。`);
+    addToast(`准备分享《${track.musicName}》。`, 'info');
   };
 
   const handleDownload = (track) => {
@@ -200,7 +202,7 @@ const GlobalPlayer = () => {
   }
 
   const handleCollectSuccess = () => {
-    alert(`歌曲《${currentTrack.musicName}》收藏成功！`);
+    addToast(`歌曲《${currentTrack.musicName}》收藏成功！`, 'success');
   };
 
   const triggerRect = triggerRef.current?.getBoundingClientRect();

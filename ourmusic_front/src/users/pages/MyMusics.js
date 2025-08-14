@@ -4,6 +4,7 @@ import { FaHistory, FaPlus } from "react-icons/fa";
 
 import axiosClient from "../../../src/api-config";
 import { AuthContext } from "../../context/auth-context";
+import { useNotification } from "../../context/notification-context";
 // --- 关键修改 1: 引入正确的“哑”组件 MusicOutput ---
 import MusicOutput from "../../musics/components/MusicOutput"; 
 import CollectionOutput from "../../collects/components/CollectionOutput";
@@ -52,6 +53,7 @@ const getPaginationItems = (currentPage, totalPageCount, siblingCount = 1) => {
 
 const MyMusics = () => {
   const auth = useContext(AuthContext);
+  const { addToast } = useNotification();
   const { userId } = useParams();
   const isLoggedInUser = Number(userId) === auth.userId;
 
@@ -287,7 +289,7 @@ const MyMusics = () => {
       };
       await axiosClient.post("/api/collection", collectionData);
       setShowCreateModal(false);
-      alert("歌单创建成功！");
+      addToast("歌单创建成功！", 'success');
       if(activeOutput === "Collection") {
         setOutputData(prev => ({...prev, Collection: {...prev.Collection, pageInfo: {...prev.Collection.pageInfo, number: 0}}}));
       } else {
@@ -370,7 +372,7 @@ const MyMusics = () => {
 
   const applyUnifiedImageToAll = () => {
     if (!unifiedImageFile || !unifiedImagePreview) {
-      alert("请先选择一个统一封面。");
+      addToast("请先选择一个统一封面。", 'info');
       return;
     }
     setNewMusics((prev) =>
@@ -380,12 +382,12 @@ const MyMusics = () => {
         imagePreview: unifiedImagePreview,
       }))
     );
-    alert("统一封面已应用到所有歌曲。");
+    addToast("统一封面已应用到所有歌曲。", 'success');
   };
 
   const applyUnifiedImageToThis = () => {
     if (!unifiedImageFile || !unifiedImagePreview) {
-      alert("请先选择一个统一封面。");
+      addToast("请先选择一个统一封面。", 'info');
       return;
     }
     const currentIndex = currentPage - 1;
@@ -397,7 +399,7 @@ const MyMusics = () => {
       }
       return updatedMusics;
     });
-    alert(`封面已应用到当前第 ${currentPage} 首歌曲。`);
+    addToast(`封面已应用到当前第 ${currentPage} 首歌曲。`, 'success');
   };
 
   const handleMusicFileChange = async (event) => {
@@ -550,7 +552,7 @@ const MyMusics = () => {
       const batchData = await Promise.all(uploadPromises);
       await axiosClient.post("/api/music/batch", batchData);
       setShowShareModal(false);
-      alert(`成功分享 ${batchData.length} 首音乐！`);
+      addToast(`成功分享 ${batchData.length} 首音乐！`, 'success');
       if (activeOutput === 'Shared') {
         setOutputData(prev => ({...prev, Shared: {...prev.Shared, pageInfo: {...prev.Shared.pageInfo, number: 0}}}));
       } else {

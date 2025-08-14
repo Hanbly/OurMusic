@@ -20,6 +20,7 @@ import { GrShareOption, GrInstallOption } from "react-icons/gr";
 import axiosClient from "../../api-config";
 import { useAudio } from "../../context/audio-context";
 import { AuthContext } from "../../context/auth-context";
+import { useNotification } from "../../context/notification-context";
 import MusicOutputContainer from "../components/MusicOutputContainer";
 import DropdownMenuContent from "../../shared/components/UI/DropdownMenuContent";
 import CollectionModal from "../../shared/components/EditModal/CollectModal";
@@ -59,6 +60,7 @@ const MusicInfo = ({ musicData, onClose, onCommentAdded }) => {
     addTrackToList,
   } = useAudio();
   const auth = useContext(AuthContext);
+  const { addToast } = useNotification();
 
   // --- 关键修改 1: 引入内部状态作为唯一数据源 ---
   const [internalMusicData, setInternalMusicData] = useState(musicData);
@@ -331,7 +333,7 @@ const MusicInfo = ({ musicData, onClose, onCommentAdded }) => {
 
   const handleAddToPlaylist = (track) => {
     addTrackToList(track);
-    alert(`已将《${track.musicName}》添加到播放列表。`);
+    addToast(`已将《${track.musicName}》添加到播放列表。`, 'success');
   };
 
   const handleCollect = () => {
@@ -344,7 +346,7 @@ const MusicInfo = ({ musicData, onClose, onCommentAdded }) => {
   };
 
   const handleShare = () => {
-    alert("分享功能待实现");
+    addToast("分享功能待实现", 'info');
   };
 
   const handleDownload = (track) => {
@@ -367,7 +369,7 @@ const MusicInfo = ({ musicData, onClose, onCommentAdded }) => {
   }
 
   const handleCollectSuccess = () => {
-    alert(`歌曲《${currentTrack.musicName}》收藏成功！`);
+    addToast(`歌曲《${currentTrack.musicName}》收藏成功！`, 'success');
   };
 
   const handleReplyAdded = (newReply, parentCommentId) => {
@@ -463,7 +465,7 @@ const MusicInfo = ({ musicData, onClose, onCommentAdded }) => {
               disabled={isInteracting}
               onClick={() => {
                 if (!auth.userId) return auth.openLoginModal();
-                if (isOwner) return alert("不能点赞自己分享的歌曲哦！");
+                if (isOwner) return addToast("不能点赞自己分享的歌曲哦！", 'info');
                 handleLikeClick();
               }}
             >
@@ -475,7 +477,7 @@ const MusicInfo = ({ musicData, onClose, onCommentAdded }) => {
               disabled={isInteracting}
               onClick={() => {
                 if (!auth.userId) return auth.openLoginModal();
-                if (isOwner) return alert("不能点踩自己分享的歌曲哦！");
+                if (isOwner) return addToast("不能点踩自己分享的歌曲哦！", 'info');
                 handleDislikeClick();
               }}
             >

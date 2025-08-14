@@ -4,6 +4,7 @@ import { FaPlay, FaTrash } from "react-icons/fa";
 
 import axiosClient from "../../../api-config";
 import { AuthContext } from "../../../context/auth-context";
+import { useNotification} from "../../../context/notification-context";
 import { useAudio } from "../../../context/audio-context";
 
 import "./MusicListItemHistoryLongVer.css";
@@ -12,6 +13,7 @@ const MusicListItemHistoryLongVer = (props) => {
   const { music, musicList, width = "100%" } = props;
   const { playTrack, currentTrack, isPlaying } = useAudio();
   const auth = useContext(AuthContext);
+  const { addToast } = useNotification();
 
   const isThisTrackPlaying =
     currentTrack?.musicId === music.musicId && isPlaying;
@@ -27,7 +29,7 @@ const MusicListItemHistoryLongVer = (props) => {
   const handleDelete = (e) => {
     e.stopPropagation();
     axiosClient.delete(`api/data-stats/collect/MUSIC/${music.musicId}/user/${auth.userId}/history`).then(() => {
-      alert("成功删除音乐记录");
+      addToast("成功删除音乐记录", 'success');
       window.location.reload();
     })
   };

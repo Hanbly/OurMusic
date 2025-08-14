@@ -10,6 +10,7 @@ import DropdownMenuContent from "../../../shared/components/UI/DropdownMenuConte
 import EditModal from "../EditModal/EditModal";
 import CollectionModal from "../EditModal/CollectModal";
 import { AuthContext } from "../../../context/auth-context";
+import { useNotification } from "../../../context/notification-context";
 import { useAudio } from "../../../context/audio-context";
 import axiosClient from "../../../api-config";
 import axiosDownload from "../../../api-config-download";
@@ -20,6 +21,7 @@ const MusicListItemPublicLongVer = (props) => {
   const { music, musicList, width = "800px" } = props;
   const { playTrack, addTrackToList, currentTrack, isPlaying } = useAudio();
   const auth = useContext(AuthContext);
+  const { addToast } = useNotification();
 
   const isOwner = auth.userId && music.userId === auth.userId;
   const isThisTrackPlaying =
@@ -221,7 +223,7 @@ const MusicListItemPublicLongVer = (props) => {
   };
 
   const handleShare = () => {
-    alert("分享功能待实现");
+    addToast("分享功能待实现", 'info');
   };
 
   const handleEdit = () => {
@@ -460,7 +462,7 @@ const MusicListItemPublicLongVer = (props) => {
             if (!auth.userId) {
               auth.openLoginModal();
             } else if (isOwner) {
-              alert("不能点赞自己分享的歌曲哦！");
+              addToast("不能点赞自己分享的歌曲哦！", 'info');
             } else {
               handleLikeClick();
             }
@@ -477,7 +479,7 @@ const MusicListItemPublicLongVer = (props) => {
             if (!auth.userId) {
               auth.openLoginModal();
             } else if (isOwner) {
-              alert("不能点踩自己分享的歌曲哦！");
+              addToast("不能点踩自己分享的歌曲哦！", 'info');
             } else {
               handleDislikeClick();
             }

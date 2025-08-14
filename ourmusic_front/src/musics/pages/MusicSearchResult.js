@@ -10,6 +10,7 @@ import {
   FaHistory,
   FaTrash,
 } from "react-icons/fa";
+import { useNotification } from "../../context/notification-context";
 
 import "./MusicSearchResult.css";
 
@@ -25,6 +26,7 @@ const MusicSearchResult = ({
   auth,
 }) => {
   const history = useHistory();
+  const { addToast } = useNotification();
 
   const handleRelatedSearchClick = (term) => {
     if (!term) return;
@@ -43,7 +45,7 @@ const MusicSearchResult = ({
 
   const handleDeleteSearchHistroy = () => {
     axiosClient.put(`/api/search/${auth.userId}/d-history`).then((response) => {
-      alert(response.data.message);
+      addToast(response.data.message, 'info');
     });
   };
 

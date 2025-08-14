@@ -3,8 +3,12 @@ import React, { useState, useRef } from "react";
 import EditModal from "./EditModal";
 import CollectionSelector from "../../../collects/components/CollectionSelector";
 import axiosClient from "../../../api-config";
+import { useNotification } from "../../../context/notification-context";
 
 const CollectModal = ({ show, onClose, music, userId, onSuccess }) => {
+    
+    const { addToast } = useNotification();
+    
   const initialCollectionsState = useRef([]);
   const [currentCollections, setCurrentCollections] = useState([]);
   
@@ -70,7 +74,7 @@ const CollectModal = ({ show, onClose, music, userId, onSuccess }) => {
         }
 
         if (successMessage) {
-            alert(successMessage);
+            addToast(successMessage, 'success');
         }
         
         if (onSuccess) {

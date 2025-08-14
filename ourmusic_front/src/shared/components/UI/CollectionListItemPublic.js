@@ -10,6 +10,7 @@ import { AiOutlineComment } from "react-icons/ai";
 
 import EditModal from "../../../shared/components/EditModal/EditModal";
 import { AuthContext } from "../../../context/auth-context";
+import { useNotification } from "../../../context/notification-context";
 import axiosClient from "../../../api-config";
 
 import "./CollectionListItemPublic.css";
@@ -18,6 +19,7 @@ const CollectionListItemPublic = (props) => {
   const { collection, onPlayAll, width = "100%" } = props;
   const auth = useContext(AuthContext);
   const isOwner = auth.userId && collection.user?.userId === auth.userId;
+  const { addToast } = useNotification();
 
   // --- 关键修改: 使用API返回的状态来初始化 ---
   const [isLiked, setIsLiked] = useState(collection.operateUserLikedOrNot);
@@ -59,7 +61,7 @@ const CollectionListItemPublic = (props) => {
   const handleLikeClick = () => {
     if (isInteracting) return;
     if (isOwner) {
-      alert("不能点赞自己的歌单哦！");
+      addToast("不能点赞自己的歌单哦！", 'info');
       return;
     }
     setIsInteracting(true);
@@ -92,7 +94,7 @@ const CollectionListItemPublic = (props) => {
   const handleDislikeClick = () => {
     if (isInteracting) return;
     if (isOwner) {
-      alert("不能点踩自己的歌单哦！");
+      addToast("不能点踩自己的歌单哦！", 'info');
       return;
     }
     setIsInteracting(true);
@@ -124,7 +126,7 @@ const CollectionListItemPublic = (props) => {
 
   const handleCollectClick = () => {
     if (isOwner) {
-      alert("不能收藏自己的歌单哦！");
+      addToast("不能收藏自己的歌单哦！", 'info');
       return;
     }
     // 假设是收藏到用户的默认收藏夹
@@ -215,7 +217,7 @@ const CollectionListItemPublic = (props) => {
 
       await axiosClient.put("/api/collection", updatedData);
       setShowEditModal(false);
-      alert("歌单更新成功！");
+      addToast("歌单更新成功！", 'success');
       window.location.reload(); // 简单起见，直接刷新页面
     } catch (err) {
       setEditError(
@@ -276,7 +278,7 @@ const CollectionListItemPublic = (props) => {
       <ul className="dropdown-menu" ref={menuRef} style={menuStyles}>
         <li
           onClick={() => {
-            alert("分享功能待实现");
+            addToast("分享功能待实现", 'info');
             setIsMenuOpen(false);
           }}
         >

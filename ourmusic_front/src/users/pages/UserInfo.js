@@ -4,6 +4,7 @@ import { FaChevronRight } from "react-icons/fa6";
 
 import axiosClient from "../../api-config";
 import { AuthContext } from "../../context/auth-context";
+import { useNotification } from "../../context/notification-context";
 import EditModal from "../../shared/components/EditModal/EditModal";
 
 import "./UserInfo.css";
@@ -11,6 +12,7 @@ import "./UserInfo.css";
 const UserInfo = () => {
   const { userId } = useParams(); // userId from URL is a string
   const auth = useContext(AuthContext);
+  const { addToast } = useNotification();
 
   // --- 新增：权限判断 ---
   // 判断当前登录用户是否是该页面的所有者
@@ -92,7 +94,7 @@ const UserInfo = () => {
 
   const handleSendCode = async () => {
     if (!newEmail || !/^\S+@\S+\.\S+$/.test(newEmail)) {
-      alert("请输入有效的邮箱格式！");
+      addToast("请输入有效的邮箱格式！", 'info');
       return;
     }
     setIsCodeButtonDisabled(true);
@@ -101,11 +103,11 @@ const UserInfo = () => {
         `/api/user/send-email/${newEmail}`
       );
       if (response.status === 200) {
-        alert("验证码已成功发送至您的新邮箱，请注意查收。");
+        addToast("验证码已成功发送至您的新邮箱，请注意查收。", 'success');
         setCountdown(60);
       }
     } catch (err) {
-      alert(err.response?.data?.message || "验证码发送失败，请稍后再试。");
+      addToast(err.response?.data?.message || "验证码发送失败，请稍后再试。", 'error');
       setIsCodeButtonDisabled(false);
     }
   };
@@ -120,7 +122,7 @@ const UserInfo = () => {
   const handleEmailEdit = (event) => {
     event.preventDefault();
     if (!verificationCode) {
-      alert("请输入验证码！");
+      addToast("请输入验证码！", 'info');
       return;
     }
     axiosClient
@@ -131,12 +133,12 @@ const UserInfo = () => {
       })
       .then((res) => {
         if (res.status === 200) {
-          alert("邮箱修改成功");
+          addToast("邮箱修改成功", 'success');
           setUserInfo((p) => ({ ...p, email: newEmail }));
           closeEmailModal();
         }
       })
-      .catch((err) => alert(err.response?.data?.message || "邮箱修改失败"));
+      .catch((err) => addToast(err.response?.data?.message || "邮箱修改失败", 'error'));
   };
 
   const handleNickNameEdit = (event) => {
@@ -145,12 +147,12 @@ const UserInfo = () => {
       .put(`/api/user/edit-info`, { userId: userId, userNickName: newNickName })
       .then((res) => {
         if (res.status === 200) {
-          alert("昵称修改成功");
+          addToast("昵称修改成功", 'success');
           setUserInfo((p) => ({ ...p, userNickName: newNickName }));
           setShowNickNameEditModal(false);
         }
       })
-      .catch((err) => alert(err.response?.data?.message || "昵称修改失败"));
+      .catch((err) => addToast(err.response?.data?.message || "昵称修改失败", 'error'));
   };
 
   const handleDescriptionEdit = (event) => {
@@ -162,22 +164,22 @@ const UserInfo = () => {
       })
       .then((res) => {
         if (res.status === 200) {
-          alert("个人简介修改成功");
+          addToast("个人简介修改成功", 'success');
           setUserInfo((p) => ({ ...p, userDescription: newDescription }));
           setShowDescriptionEditModal(false);
         }
       })
-      .catch((err) => alert(err.response?.data?.message || "个人简介修改失败"));
+      .catch((err) => addToast(err.response?.data?.message || "个人简介修改失败", 'error'));
   };
 
   const handlePasswordEdit = (event) => {
     event.preventDefault();
     if (passwords.new !== passwords.confirm) {
-      alert("新密码和确认密码不匹配！");
+      addToast("新密码和确认密码不匹配！", 'info');
       return;
     }
     if (passwords.current === passwords.new) {
-      alert("新密码和旧密码不能一致！");
+      addToast("新密码和旧密码不能一致！", 'info');
       return;
     }
     axiosClient
@@ -188,11 +190,11 @@ const UserInfo = () => {
       })
       .then((res) => {
         if (res.status === 200) {
-          alert("密码修改成功");
+          addToast("密码修改成功", 'success');
           setShowPasswordEditModal(false);
         }
       })
-      .catch((err) => alert(err.response?.data?.message || "密码修改失败"));
+      .catch((err) => addToast(err.response?.data?.message || "密码修改失败", 'error'));
   };
 
   const handleAvatarSelect = (event) => {
@@ -216,14 +218,14 @@ const UserInfo = () => {
         userAvatarFileId: customFileId,
       });
       if (updateRes.status === 200) {
-        alert("头像更新成功！");
+        addToast("头像更新成功！", 'success');
         auth.updateUserData({ userImage: fileUrl });
         setUserInfo((p) => ({ ...p, userAvatarFileUrl: fileUrl }));
         setShowAvatarEditModal(false);
         setAvatarPreview(null);
       }
     } catch (err) {
-      alert(err.response?.data?.message || "操作失败");
+      addToast(err.response?.data?.message || "操作失败", 'error');
     }
   };
 
@@ -234,11 +236,11 @@ const UserInfo = () => {
           userId: userId,
           userName: userInfo?.userName,
         });
-        alert("成功退出登录");
+        addToast("成功退出登录", 'success');
         auth.logout();
         window.location.href = "/";
       } catch (error) {
-        alert("退出账号失败，或您已处于离线状态。");
+        addToast("退出账号失败，或您已处于离线状态。", 'error');
         auth.logout();
         window.location.href = "/";
       }
