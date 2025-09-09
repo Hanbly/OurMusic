@@ -129,16 +129,15 @@ const CollectionListItemPublic = (props) => {
       addToast("不能收藏自己的歌单哦！", 'info');
       return;
     }
-    // 假设是收藏到用户的默认收藏夹
     axiosClient
       .put(
-        `/api/data-stats/collect/COLLECTION/${collection.collectionId}/user/${auth.userId}/default`
+        `/api/data-stats/collect/COLLECTION/${collection.collectionId}/user/${auth.userId}/to-collection/0`
       )
       .then((response) => {
-        if (response.data.message === "歌单加入默认收藏成功") {
+        if (response.data.message === "用户收藏歌单成功") {
           setIsCollected(true);
           setCollectCount((prev) => prev + 1);
-        } else if (response.data.message === "歌单取消加入默认收藏成功") {
+        } else if (response.data.message === "用户取消收藏歌单成功") {
           setIsCollected(false);
           setCollectCount((prev) => prev - 1);
         }
